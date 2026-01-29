@@ -14,8 +14,31 @@ export class AirtableClient {
   constructor(private readonly config = defaultAirtableConfig) {}
 
   private hasValidToken(): boolean {
+    if (this.config.proxyUrl && this.config.proxyUrl.trim().length > 0) {
+      return true;
+    }
     const token = this.config.personalAccessToken?.trim();
     return Boolean(token && !token.startsWith("YOUR_"));
+  }
+
+  private getBaseUrl(): string {
+    const proxy = this.config.proxyUrl?.trim();
+    if (proxy) {
+      return proxy.replace(/\/+$/, "");
+    }
+    return AIRTABLE_REST_BASE;
+  }
+
+  private buildHeaders(): Record<string, string> {
+    if (this.config.proxyUrl && this.config.proxyUrl.trim().length > 0) {
+      return {
+        "Content-Type": "application/json",
+      };
+    }
+    return {
+      Authorization: `Bearer ${this.config.personalAccessToken}`,
+      "Content-Type": "application/json",
+    };
   }
 
   private async createRecord(
@@ -30,12 +53,9 @@ export class AirtableClient {
       return null;
     }
 
-    const response = await fetch(`${AIRTABLE_REST_BASE}/${baseId}/${buildTablePath(tableName)}`, {
+    const response = await fetch(`${this.getBaseUrl()}/${baseId}/${buildTablePath(tableName)}`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${this.config.personalAccessToken}`,
-        "Content-Type": "application/json",
-      },
+      headers: this.buildHeaders(),
       body: JSON.stringify({ fields }),
     });
 
@@ -85,12 +105,10 @@ export class AirtableClient {
       }
 
       const query = params.toString();
-      const url = `${AIRTABLE_REST_BASE}/${baseId}/${buildTablePath(tableName)}${query ? `?${query}` : ""}`;
+      const url = `${this.getBaseUrl()}/${baseId}/${buildTablePath(tableName)}${query ? `?${query}` : ""}`;
       const response = await fetch(url, {
         method: "GET",
-        headers: {
-          Authorization: `Bearer ${this.config.personalAccessToken}`,
-        },
+        headers: this.config.proxyUrl ? undefined : { Authorization: `Bearer ${this.config.personalAccessToken}` },
       });
 
       if (!response.ok) {

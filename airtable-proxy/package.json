@@ -1,0 +1,9 @@
+{
+  "name": "airtable-proxy",
+  "version": "1.0.0",
+  "private": true,
+  "main": "airtableProxy/index.js",
+  "engines": {
+    "node": "18"
+  }
+}

@@ -26,6 +26,10 @@ export interface AirtableEnvironmentConfig {
     persons: string;
     notes: string;
   };
+  /**
+   * Optional proxy URL to avoid exposing PATs in the frontend (Azure Function).
+   */
+  proxyUrl?: string;
 }
 
 /**
@@ -84,4 +88,5 @@ export const defaultAirtableConfig: AirtableEnvironmentConfig = {
     persons: envOrFallback(readEnv("AIRTABLE_TABLE_PERSONS"), FALLBACK_TABLES.persons),
     notes: envOrFallback(readEnv("AIRTABLE_TABLE_NOTES"), FALLBACK_TABLES.notes),
   },
+  proxyUrl: readEnv("AIRTABLE_PROXY_URL"),
 };
