@@ -4,7 +4,7 @@
   --bg-top: #ffffff;
   --bg-bottom: #ffffff;
   --text-main: #0b1426;
-  --tabs-bg: #03588c;
+  --tabs-bg: #ffffff;
   --button: #03588c;
   --button-hover: #024a78;
   --bg-gradient: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
@@ -20,7 +20,7 @@ body {
   height: 100%;
   margin: 0;
   padding: 0;
-  background: var(--bg-gradient);
+  background: #ffffff;
   overflow-x: hidden;
   color: var(--text-main);
 }
@@ -30,7 +30,7 @@ body {
   flex-direction: column;
   gap: 12px;
   padding: 12px 10px 18px;
-  background: var(--bg-gradient);
+  background: #ffffff;
   align-items: center;
   box-sizing: border-box;
 }
@@ -320,7 +320,7 @@ textarea {
   border-bottom: 0;
   width: 100%;
   max-width: 900px;
-  background: var(--tabs-bg);
+  background: #ffffff;
   padding: 9px 6px 0 11px;
   box-sizing: border-box;
   border-radius: 12px 12px 0 0;
@@ -350,7 +350,7 @@ textarea {
   width: 100%;
   position: relative;
   z-index: 1;
-  background: var(--tabs-bg);
+  background: #ffffff;
   padding: 0 0 0 0;
   margin-top: -5px;
   border-radius: 0 18px 18px 18px;

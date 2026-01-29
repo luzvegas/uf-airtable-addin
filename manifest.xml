@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0" xmlns:mailappor="http://schemas.microsoft.com/office/mailappversionoverrides" xsi:type="MailApp">
   <Id>5bea27af-b5f4-4b3f-a855-59f3824d7346</Id>
-  <Version>1.0.0.20</Version>
+  <Version>1.0.0.21</Version>
   <ProviderName>Unsere Farben</ProviderName>
   <DefaultLocale>de-CH</DefaultLocale>
   <DisplayName DefaultValue=" UF Airtable Outlook AddIn"/>
@@ -12,7 +12,6 @@
   <AppDomains>
     <AppDomain>https://projekte.unserefarben.ch</AppDomain>
     <AppDomain>https://orange-sea-0707ec51e.4.azurestaticapps.net</AppDomain>
-    <AppDomain>https://localhost:3000</AppDomain>
     <AppDomain>https://login.microsoftonline.com</AppDomain>
     <AppDomain>https://graph.microsoft.com</AppDomain>
   </AppDomains>

@@ -11,7 +11,7 @@ const envResult = dotenv.config({ path: path.resolve(__dirname, ".env") });
 const envVariables = envResult.error ? {} : envResult.parsed;
 
 const urlDev = "https://localhost:3000/";
-const urlProd = "https://www.contoso.com/"; // CHANGE THIS TO YOUR PRODUCTION DEPLOYMENT LOCATION
+const urlProd = "https://orange-sea-0707ec51e.4.azurestaticapps.net/"; // Production deployment location
 
 async function getHttpsOptions() {
   const httpsOptions = await devCerts.getHttpsServerOptions();
