@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0" xmlns:mailappor="http://schemas.microsoft.com/office/mailappversionoverrides" xsi:type="MailApp">
   <Id>5bea27af-b5f4-4b3f-a855-59f3824d7346</Id>
-  <Version>1.0.0.21</Version>
+  <Version>1.0.0.22</Version>
   <ProviderName>Unsere Farben</ProviderName>
   <DefaultLocale>de-CH</DefaultLocale>
   <DisplayName DefaultValue=" UF Airtable Outlook AddIn"/>
@@ -26,7 +26,7 @@
   <FormSettings>
     <Form xsi:type="ItemRead">
       <DesktopSettings>
-        <SourceLocation DefaultValue="https://orange-sea-0707ec51e.4.azurestaticapps.net/taskpane.html"/>
+        <SourceLocation DefaultValue="https://orange-sea-0707ec51e.4.azurestaticapps.net/taskpane.html?v=1.0.0.22"/>
         <RequestedHeight>250</RequestedHeight>
       </DesktopSettings>
     </Form>
@@ -78,8 +78,8 @@
         <bt:Image id="Icon.80x80" DefaultValue="https://orange-sea-0707ec51e.4.azurestaticapps.net/assets/icon-80.png"/>
       </bt:Images>
       <bt:Urls>
-        <bt:Url id="Commands.Url" DefaultValue="https://orange-sea-0707ec51e.4.azurestaticapps.net/commands.html"/>
-        <bt:Url id="Taskpane.Url" DefaultValue="https://orange-sea-0707ec51e.4.azurestaticapps.net/taskpane.html"/>
+        <bt:Url id="Commands.Url" DefaultValue="https://orange-sea-0707ec51e.4.azurestaticapps.net/commands.html?v=1.0.0.22"/>
+        <bt:Url id="Taskpane.Url" DefaultValue="https://orange-sea-0707ec51e.4.azurestaticapps.net/taskpane.html?v=1.0.0.22"/>
       </bt:Urls>
       <bt:ShortStrings>
         <bt:String id="GroupLabel" DefaultValue="UF Airtable"/>
