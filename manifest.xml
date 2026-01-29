@@ -19,7 +19,7 @@
   <Hosts>
     <Host Name="Mailbox"/>
   </Hosts>
-  <Requirements>
+  <Requirements >
     <Sets>
       <Set Name="Mailbox" MinVersion="1.1"/>
     </Sets>
