@@ -84,6 +84,11 @@ module.exports = async (env, options) => {
             to: "assets/[name][ext][query]",
           },
           {
+            from: "staticwebapp.config.json",
+            to: "staticwebapp.config.json",
+            noErrorOnMissing: true,
+          },
+          {
             from: "manifest*.xml",
             to: "[name]" + "[ext]",
             transform(content) {
