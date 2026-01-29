@@ -53,9 +53,18 @@ Office.onReady(async (info) => {
 });
 
 async function initializePane() {
+  setUiVersion();
   wireUpForms();
   setupTabs();
   await Promise.all([hydrateContext(), loadProjects(), loadCollaborators(), loadExternalPersons()]);
+}
+
+function setUiVersion() {
+  const el = document.getElementById("ui-version");
+  if (!el) return;
+  const params = new URLSearchParams(window.location.search);
+  const version = params.get("v") || params.get("version");
+  el.textContent = version ? `v${version}` : "local";
 }
 
 function wireUpForms() {
