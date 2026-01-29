@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0" xmlns:mailappor="http://schemas.microsoft.com/office/mailappversionoverrides" xsi:type="MailApp">
   <Id>5bea27af-b5f4-4b3f-a855-59f3824d7346</Id>
-  <Version>1.0.0.19</Version>
+  <Version>1.0.0.20</Version>
   <ProviderName>Unsere Farben</ProviderName>
   <DefaultLocale>de-CH</DefaultLocale>
   <DisplayName DefaultValue=" UF Airtable Outlook AddIn"/>
   <Description DefaultValue="AddIn um aus Outlook verschiedene Informationen an Airtable zu senden."/>
-  <IconUrl DefaultValue="https://airtableoutlookaddin.z6.web.core.windows.net/assets/icon-64.png"/>
-  <HighResolutionIconUrl DefaultValue="https://airtableoutlookaddin.z6.web.core.windows.net/assets/icon-128.png"/>
+  <IconUrl DefaultValue="https://orange-sea-0707ec51e.4.azurestaticapps.net/assets/icon-64.png"/>
+  <HighResolutionIconUrl DefaultValue="https://orange-sea-0707ec51e.4.azurestaticapps.net/assets/icon-128.png"/>
   <SupportUrl DefaultValue="https://www.unserefarben.ch"/>
   <AppDomains>
     <AppDomain>https://projekte.unserefarben.ch</AppDomain>
-    <AppDomain>https://airtableoutlookaddin.z6.web.core.windows.net</AppDomain>
+    <AppDomain>https://orange-sea-0707ec51e.4.azurestaticapps.net</AppDomain>
     <AppDomain>https://localhost:3000</AppDomain>
     <AppDomain>https://login.microsoftonline.com</AppDomain>
     <AppDomain>https://graph.microsoft.com</AppDomain>
@@ -27,7 +27,7 @@
   <FormSettings>
     <Form xsi:type="ItemRead">
       <DesktopSettings>
-        <SourceLocation DefaultValue="https://airtableoutlookaddin.z6.web.core.windows.net/taskpane.html"/>
+        <SourceLocation DefaultValue="https://orange-sea-0707ec51e.4.azurestaticapps.net/taskpane.html"/>
         <RequestedHeight>250</RequestedHeight>
       </DesktopSettings>
     </Form>
@@ -74,13 +74,13 @@
     </Hosts>
     <Resources>
       <bt:Images>
-        <bt:Image id="Icon.16x16" DefaultValue="https://airtableoutlookaddin.z6.web.core.windows.net/assets/icon-16.png"/>
-        <bt:Image id="Icon.32x32" DefaultValue="https://airtableoutlookaddin.z6.web.core.windows.net/assets/icon-32.png"/>
-        <bt:Image id="Icon.80x80" DefaultValue="https://airtableoutlookaddin.z6.web.core.windows.net/assets/icon-80.png"/>
+        <bt:Image id="Icon.16x16" DefaultValue="https://orange-sea-0707ec51e.4.azurestaticapps.net/assets/icon-16.png"/>
+        <bt:Image id="Icon.32x32" DefaultValue="https://orange-sea-0707ec51e.4.azurestaticapps.net/assets/icon-32.png"/>
+        <bt:Image id="Icon.80x80" DefaultValue="https://orange-sea-0707ec51e.4.azurestaticapps.net/assets/icon-80.png"/>
       </bt:Images>
       <bt:Urls>
-        <bt:Url id="Commands.Url" DefaultValue="https://airtableoutlookaddin.z6.web.core.windows.net/commands.html"/>
-        <bt:Url id="Taskpane.Url" DefaultValue="https://airtableoutlookaddin.z6.web.core.windows.net/taskpane.html"/>
+        <bt:Url id="Commands.Url" DefaultValue="https://orange-sea-0707ec51e.4.azurestaticapps.net/commands.html"/>
+        <bt:Url id="Taskpane.Url" DefaultValue="https://orange-sea-0707ec51e.4.azurestaticapps.net/taskpane.html"/>
       </bt:Urls>
       <bt:ShortStrings>
         <bt:String id="GroupLabel" DefaultValue="UF Airtable"/>
