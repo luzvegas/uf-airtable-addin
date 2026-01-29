@@ -1,0 +1,213 @@
+<!-- Copyright (c) Microsoft Corporation. All rights reserved. Licensed under the MIT License. -->
+<!-- First-run page layout -->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>UF Airtable</title>
+
+    <!-- Office JavaScript API -->
+    <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+    <!-- MSAL Browser (CDN) -->
+    <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
+
+    <!-- Fluent UI core -->
+    <link rel="stylesheet" href="https://res-1.cdn.office.net/files/fabric-cdn-prod_20230815.002/office-ui-fabric-core/11.1.0/css/fabric.min.css"/>
+
+    <!-- Template styles -->
+    <link href="taskpane.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="pane">
+    <header class="app-header">
+        <img width="48" height="48" src="../assets/uf-outlook.png" alt="UF Airtable" />
+        <div>
+            <p class="eyebrow">Outlook -> Airtable</p>
+            <h1>UF Airtable</h1>
+            <p class="subtitle">Emails als Aufgabe, Termin oder Dokument speichern.</p>
+        </div>
+    </header>
+
+    <section id="sideload-msg" class="card notice">
+        <p>Bitte <a target="_blank" href="https://learn.microsoft.com/office/dev/add-ins/testing/test-debug-office-add-ins#sideload-an-office-add-in-f%C3%BCr-testing">sideload</a> das Add-in, um den Inhalt zu sehen.</p>
+    </section>
+
+    <main id="app-body" class="app-body" style="display: none;">
+        <section class="card">
+            <h2>Aktuelle Mail</h2>
+            <dl class="mail-meta">
+                <dt>Betreff</dt>
+                <dd id="mail-subject">-</dd>
+                <dt>Absender</dt>
+                <dd id="mail-from">-</dd>
+                <dt>Eingang</dt>
+                <dd id="mail-date">-</dd>
+            </dl>
+        </section>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-tab-target="tab-tasks">Tasks &amp; Termine</button>
+            <button class="tab-btn" data-tab-target="tab-docs">Dokumente &amp; Links</button>
+            <button class="tab-btn" data-tab-target="tab-notes">Gesprächsnotizen</button>
+        </div>
+
+        <div class="tab-panel active" id="tab-tasks">
+            <section class="card">
+                <h2>Mail als To-Do speichern</h2>
+                <form id="task-form" class="form-grid">
+                    <label>Titel
+                        <input id="task-title" type="text" placeholder="Standard: Betreff" />
+                    </label>
+                    <label>Art
+                        <select id="task-art">
+                            <option value="Task" selected>Task</option>
+                            <option value="Termin">Termin</option>
+                        </select>
+                    </label>
+                    <label>Beschreibung
+                        <textarea id="task-description" rows="3" placeholder="Beschreibung der Aufgabe"></textarea>
+                    </label>
+                    <label>Projekt
+                        <input list="task-project-datalist" id="task-project-input" class="project-input" type="text" placeholder="Projektnamen suchen oder recID einfügen" />
+                        <datalist id="task-project-datalist"></datalist>
+                        <span class="input-hint">Tippe zum Suchen (Name) oder füge eine Record-ID ein.</span>
+                    </label>
+                    <p id="project-select-status" class="status info"></p>
+                    <label>Zuständig intern
+                        <input list="task-owner-datalist" id="task-owner-input" class="project-input" type="text" placeholder="Name suchen oder E-Mail eingeben" />
+                        <datalist id="task-owner-datalist"></datalist>
+                        <span class="input-hint">Tippe zum Suchen (Name/E-Mail) oder füge eine E-Mail/ID ein.</span>
+                    </label>
+                    <label>Zuständig extern
+                        <input list="task-external-datalist" id="task-external" type="text" placeholder="Name suchen oder recID eingeben" />
+                        <datalist id="task-external-datalist"></datalist>
+                        <span class="input-hint">Tippe zum Suchen (Personen) oder füge eine Record-ID ein.</span>
+                    </label>
+                    <label>Start (Datum/Uhrzeit)
+                        <input id="task-start" type="datetime-local" />
+                    </label>
+                    <label>Ende (Datum/Uhrzeit)
+                        <input id="task-end" type="datetime-local" />
+                    </label>
+                    <label>Status
+                        <select id="task-status-select">
+                            <option value="">Nicht gesetzt</option>
+                            <option value="Offen">Offen</option>
+                            <option value="In Arbeit">In Arbeit</option>
+                            <option value="Warten">Warten</option>
+                            <option value="Abgeschlossen">Abgeschlossen</option>
+                        </select>
+                    </label>
+                    <label>Priorität
+                        <select id="task-priority">
+                            <option value="">Nicht gesetzt</option>
+                            <option value="niedrig">niedrig</option>
+                            <option value="Normal">Normal</option>
+                            <option value="Hoch">Hoch</option>
+                            <option value="Kritisch">Kritisch</option>
+                        </select>
+                    </label>
+                    <label>Kategorie
+                        <select id="task-category">
+                            <option value="">Nicht gesetzt</option>
+                            <option value="Conform">Conform</option>
+                            <option value="Grading">Grading</option>
+                            <option value="Deliveries">Deliveries</option>
+                            <option value="Mastering">Mastering</option>
+                            <option value="Intern">Intern</option>
+                            <option value="Extern">Extern</option>
+                            <option value="Technisch">Technisch</option>
+                            <option value="VFX">VFX</option>
+                            <option value="Edit">Edit</option>
+                            <option value="Sound">Sound</option>
+                            <option value="Untertitel">Untertitel</option>
+                            <option value="Meet/Talk">Meet/Talk</option>
+                            <option value="Screening">Screening</option>
+                            <option value="Administration">Administration</option>
+                            <option value="Buchhhaltung">Buchhhaltung</option>
+                            <option value="Deadline">Deadline</option>
+                        </select>
+                    </label>
+                    <div class="form-block">
+                        <span>Anhänge für diese Aufgabe</span>
+                        <div id="task-attachment-choices" class="choice-list"></div>
+                    </div>
+                    <button type="submit" class="primary">Aufgabe anlegen</button>
+                    <p id="task-status" class="status"></p>
+                </form>
+            </section>
+        </div>
+
+        <div class="tab-panel" id="tab-docs">
+            <section class="card">
+                <h2>Links oder Dokumente</h2>
+                <form id="document-form" class="form-grid">
+                    <label>Projekt
+                        <input list="document-project-datalist" id="document-project-input" type="text" required />
+                        <datalist id="document-project-datalist"></datalist>
+                    </label>
+                    <label>Bezeichnung
+                        <input id="document-label" type="text" placeholder="z.B. Angebot.pdf" required />
+                    </label>
+                    <label>Quelle
+                        <select id="document-source">
+                            <option value="link">Link aus der Mail</option>
+                            <option value="attachment">Anhang</option>
+                        </select>
+                    </label>
+                    <div id="document-link-group" class="form-block">
+                        <label>Gefundene Links</label>
+                        <div id="document-link-choices" class="choice-list"></div>
+                    </div>
+                    <div id="document-attachment-group" class="form-block hidden">
+                        <label>Verfügbare Anhänge</label>
+                        <div id="document-attachment-choices" class="choice-list"></div>
+                    </div>
+                    <button type="submit" class="primary">Eintrag anlegen</button>
+                    <p id="document-status" class="status"></p>
+                </form>
+            </section>
+        </div>
+
+        <div class="tab-panel" id="tab-notes">
+            <section class="card">
+                <h2>Gesprächsnotiz speichern</h2>
+                <form id="note-form" class="form-grid">
+                    <label>Titel
+                        <input id="note-title" type="text" placeholder="Standard: Betreff" />
+                    </label>
+                    <label>Notiz
+                        <textarea id="note-body" rows="4" placeholder="Mail-Text oder eigene Notiz"></textarea>
+                    </label>
+                    <label>Projekt
+                        <input list="note-project-datalist" id="note-project-input" class="project-input" type="text" placeholder="Projektnamen suchen oder recID eingeben" />
+                        <datalist id="note-project-datalist"></datalist>
+                    </label>
+                    <label>Art
+                        <select id="note-art">
+                            <option value="Telefon">Telefon</option>
+                            <option value="Intern">Intern</option>
+                            <option value="Meeting">Meeting</option>
+                            <option value="E-Mail" selected>E-Mail</option>
+                            <option value="Sonstiges">Sonstiges</option>
+                        </select>
+                    </label>
+                    <label>Person(en)
+                        <input list="note-person-datalist" id="note-persons" type="text" placeholder="Name oder recID, kommasepariert" />
+                        <datalist id="note-person-datalist"></datalist>
+                        <div id="note-persons-selected" class="token-list"></div>
+                        <span class="input-hint">Tippe zum Suchen, bestätige mit Enter/Komma/Semikolon; mehrfach möglich.</span>
+                    </label>
+                    <button type="submit" class="primary">Notiz speichern</button>
+                    <p id="note-status" class="status"></p>
+                </form>
+            </section>
+        </div>
+    </main>
+</body>
+
+</html>
