@@ -7,7 +7,6 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'airtable-proxy'
   NODE_VERSION: '20'
 
 jobs:
@@ -38,6 +37,11 @@ jobs:
         run: npm run test --if-present
         working-directory: airtable-proxy
 
+      - name: Package function app
+        run: |
+          cd airtable-proxy
+          zip -r ../../release.zip .
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -50,4 +54,4 @@ jobs:
         with:
           app-name: airtable-proxy-uf
           slot-name: Production
-          package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+          package: release.zip
