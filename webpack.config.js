@@ -23,6 +23,7 @@ module.exports = async (env, options) => {
   const dev = mode === "development";
   const envInjected = {
     NODE_ENV: mode,
+    ...process.env,
     ...envVariables,
   };
   const config = {
