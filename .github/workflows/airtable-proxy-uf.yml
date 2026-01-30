@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'AirtableOutlookAddIn/airtable-proxy'
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: '.'
   NODE_VERSION: '20'
 
 defaults:
@@ -40,8 +40,8 @@ jobs:
 
       - name: Zip artifact for deployment
         run: |
-          cd ../..
-          zip -r release.zip ./${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+          cd AirtableOutlookAddIn/airtable-proxy
+          zip -r ../../release.zip .
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
