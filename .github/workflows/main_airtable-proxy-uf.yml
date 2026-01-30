@@ -10,12 +10,12 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'airtable-proxy'
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'AirtableOutlookAddIn/airtable-proxy'
   NODE_VERSION: '22'
 
 defaults:
   run:
-    working-directory: airtable-proxy
+    working-directory: AirtableOutlookAddIn/airtable-proxy
 
 jobs:
   build:
@@ -84,3 +84,4 @@ jobs:
           package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
 
           
+
