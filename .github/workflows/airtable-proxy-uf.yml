@@ -8,6 +8,7 @@ on:
 
 env:
   NODE_VERSION: '20'
+  FUNCTION_PATH: 'AirtableOutlookAddIn/airtable-proxy'
 
 jobs:
   build_and_deploy:
@@ -27,19 +28,19 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-        working-directory: airtable-proxy
+        working-directory: ${{ env.FUNCTION_PATH }}
 
       - name: Build
         run: npm run build --if-present
-        working-directory: airtable-proxy
+        working-directory: ${{ env.FUNCTION_PATH }}
 
       - name: Test
         run: npm run test --if-present
-        working-directory: airtable-proxy
+        working-directory: ${{ env.FUNCTION_PATH }}
 
       - name: Package function app
         run: |
-          cd airtable-proxy
+          cd ${{ env.FUNCTION_PATH }}
           zip -r ../release.zip .
 
       - name: Login to Azure
@@ -54,4 +55,4 @@ jobs:
         with:
           app-name: airtable-proxy-uf
           slot-name: Production
-          package: release.zip
+          package: ${{ env.FUNCTION_PATH }}/../release.zip
