@@ -634,7 +634,8 @@ async function handleCreatePersonFromSender() {
     const positionInput = document.getElementById("person-position") as HTMLInputElement | null;
     const companyInput = document.getElementById("person-company-input") as HTMLInputElement | null;
     const email = emailInput?.value?.trim() || senderEmail || "";
-    const name = nameInput?.value?.trim() || (email ? email.split("@")[0] : "Unbekannt");
+    const signatureName = extractSignatureName(messageBodyText);
+    const name = nameInput?.value?.trim() || signatureName || (email ? email.split("@")[0] : "Unbekannt");
     const roles = roleInput?.value
       ? roleInput.value
           .split(/[,;\n]/)
@@ -817,8 +818,9 @@ function prefillPersonDefaults(item: Office.MessageRead) {
   const emailInput = document.getElementById("person-email") as HTMLInputElement | null;
   const displayName = item.from?.displayName?.trim() || "";
   const email = item.from?.emailAddress?.trim() || senderEmail || "";
+  const signatureName = extractSignatureName(messageBodyText);
   if (nameInput && !nameInput.value) {
-    nameInput.value = displayName || (email ? email.split("@")[0] : "");
+    nameInput.value = displayName || signatureName || (email ? email.split("@")[0] : "");
   }
   if (emailInput && !emailInput.value) {
     emailInput.value = email;
@@ -1171,6 +1173,27 @@ function extractSignatureInfo(text: string): { mobile?: string; phone?: string }
   });
 
   return { mobile, phone };
+}
+
+function extractSignatureName(text: string): string {
+  if (!text) {
+    return "";
+  }
+  const lines = text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const tail = lines.slice(-20);
+  for (const line of tail) {
+    if (/@/.test(line)) continue;
+    if (/\+?\d[\d\s().-]{6,}\d/.test(line)) continue;
+    if (/^(telefon|phone|tel|mobile|mobil|handy|fax|www\.|http|https)/i.test(line)) continue;
+    const clean = line.replace(/[|•]/g, " ").replace(/\s+/g, " ").trim();
+    if (clean.split(" ").length >= 2 && /[A-Za-zÀ-ÿ]/.test(clean)) {
+      return clean;
+    }
+  }
+  return "";
 }
 
 function getSelectedInternalOwnerId(): string | undefined {
