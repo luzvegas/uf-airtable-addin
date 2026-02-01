@@ -424,6 +424,11 @@ async function loadCompanies() {
   if (!datalist) {
     return;
   }
+  if (status) {
+    status.textContent = "Firmen werden geladen â€¦";
+    status.className = "status pending";
+  }
+  console.info("Lade Firmen aus Airtable â€¦");
   try {
     companyOptions = await airtableClient.fetchCompanies();
     datalist.innerHTML = "";
@@ -446,6 +451,7 @@ async function loadCompanies() {
         : "Keine Firmen gefunden. Bitte recID manuell eingeben.";
       status.className = companyOptions.length ? "status success" : "status info";
     }
+    console.info(`Firmen geladen: ${companyOptions.length}`);
     prefillCompanyFromSender();
   } catch (error) {
     console.error("Firmen konnten nicht geladen werden:", error);
