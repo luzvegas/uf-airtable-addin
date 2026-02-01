@@ -34,7 +34,7 @@ jobs:
            result-encoding: string
       - name: Write .env for static build
         run: |
-          cat > AirtableOutlookAddIn/.env <<EOF
+          cat > .env <<EOF
           AIRTABLE_PAT=${{ secrets.AIRTABLE_PAT }}
           AIRTABLE_BASE_TASKS=${{ vars.AIRTABLE_BASE_TASKS }}
           AIRTABLE_BASE_EVENTS=${{ vars.AIRTABLE_BASE_EVENTS }}
