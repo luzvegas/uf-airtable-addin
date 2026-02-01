@@ -100,6 +100,11 @@ function wireUpForms() {
     createPersonBtn.addEventListener("click", handleCreatePersonFromSender);
   }
 
+  const personToggle = document.getElementById("person-toggle");
+  if (personToggle) {
+    personToggle.addEventListener("click", togglePersonForm);
+  }
+
   const notePersonsInput = document.getElementById("note-persons") as HTMLInputElement | null;
   if (notePersonsInput) {
     const commitNotePersonInput = () => addNotePersonToken(notePersonsInput.value);
@@ -623,6 +628,11 @@ async function handleCreatePersonFromSender() {
     const position = positionInput?.value?.trim() || "";
     const companyRecordIds = resolveCompanyRecordIds(companyInput?.value || "");
 
+    if (!roleValues.length) {
+      setStatus("person-status", "Bitte mindestens eine Rolle angeben.", "error");
+      return;
+    }
+
     if (email) {
       const existing = await airtableClient.findPersonByEmail(email);
       if (existing) {
@@ -1069,6 +1079,16 @@ function limitBodyText(text: string, maxLength = 12000): string {
 function normalizeBodyText(text: string): string {
   if (!text) return "";
   return text.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+function togglePersonForm() {
+  const container = document.getElementById("person-form");
+  const toggle = document.getElementById("person-toggle");
+  if (!container || !toggle) {
+    return;
+  }
+  const isCollapsed = container.classList.toggle("collapsed");
+  toggle.textContent = isCollapsed ? "Personendetails anzeigen" : "Personendetails ausblenden";
 }
 
 function normalizeRoleValues(values: string[]): string[] {

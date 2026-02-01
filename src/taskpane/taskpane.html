@@ -24,11 +24,9 @@
 
 <body class="pane">
     <header class="app-header">
-        <img width="48" height="48" src="../assets/uf-outlook.png" alt="UF Airtable" />
+        <img width="48" height="48" src=".../Icon/uf_outline logo.png" alt="UF Airtable" />
         <div>
-            <p class="eyebrow">Outlook -> Airtable</p>
-            <h1>UF Airtable</h1>
-            <p class="subtitle">Emails als Aufgabe, Termin oder Dokument speichern.</p>
+            <h1>UF Airtable AddIn</h1>
             <p class="version-line">UI-Version: <span id="ui-version">-</span></p>
         </div>
     </header>
@@ -52,7 +50,8 @@
                 <button id="create-person-btn" type="button" class="secondary">Person aus Absender anlegen</button>
                 <p id="person-status" class="status"></p>
             </div>
-            <div class="person-form">
+            <button id="person-toggle" type="button" class="secondary small">Personendetails anzeigen</button>
+            <div class="person-form collapsed" id="person-form">
                 <label>Name
                     <input id="person-name" type="text" placeholder="Name der Person" />
                 </label>
@@ -64,7 +63,7 @@
                     <datalist id="person-company-datalist"></datalist>
                 </label>
                 <label>Rolle
-                    <input list="person-role-datalist" id="person-role-input" type="text" placeholder="Rolle(n) suchen oder eingeben" />
+                    <input list="person-role-datalist" id="person-role-input" type="text" placeholder="Rolle(n) suchen oder eingeben" required />
                     <datalist id="person-role-datalist"></datalist>
                 </label>
                 <label>Position
