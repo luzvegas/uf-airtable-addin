@@ -43,10 +43,29 @@ jobs:
           cd ${{ env.FUNCTION_PATH }}
           zip -r "${{ env.PACKAGE_PATH }}" .
 
-      - name: Run Azure Functions Action
-        uses: Azure/functions-action@v1
-        with:
-          app-name: airtable-proxy
-          slot-name: Production
-          package: ${{ env.PACKAGE_PATH }}
-          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
+      - name: Deploy via Zip Deploy
+        run: |
+          echo "${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}" > publishProfile.xml
+          USER=$(python - <<'PY'
+import xml.etree.ElementTree as ET
+root = ET.parse('publishProfile.xml').getroot()
+profile = root.find(".//publishProfile[@publishMethod='MSDeploy']")
+print(profile.get('userName'))
+PY
+)
+          PASS=$(python - <<'PY'
+import xml.etree.ElementTree as ET
+root = ET.parse('publishProfile.xml').getroot()
+profile = root.find(".//publishProfile[@publishMethod='MSDeploy']")
+print(profile.get('userPWD'))
+PY
+)
+          SCM=$(python - <<'PY'
+import xml.etree.ElementTree as ET
+root = ET.parse('publishProfile.xml').getroot()
+profile = root.find(".//publishProfile[@publishMethod='MSDeploy']")
+print(profile.get('publishUrl').split(':')[0])
+PY
+)
+          echo "Deploying to $SCM"
+          curl -sS -u "$USER:$PASS" -X POST "https://$SCM/api/zipdeploy" --data-binary "@${{ env.PACKAGE_PATH }}"
