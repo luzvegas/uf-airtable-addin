@@ -46,26 +46,8 @@ jobs:
       - name: Deploy via Zip Deploy
         run: |
           echo "${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}" > publishProfile.xml
-          USER=$(python - <<'PY'
-import xml.etree.ElementTree as ET
-root = ET.parse('publishProfile.xml').getroot()
-profile = root.find(".//publishProfile[@publishMethod='MSDeploy']")
-print(profile.get('userName'))
-PY
-)
-          PASS=$(python - <<'PY'
-import xml.etree.ElementTree as ET
-root = ET.parse('publishProfile.xml').getroot()
-profile = root.find(".//publishProfile[@publishMethod='MSDeploy']")
-print(profile.get('userPWD'))
-PY
-)
-          SCM=$(python - <<'PY'
-import xml.etree.ElementTree as ET
-root = ET.parse('publishProfile.xml').getroot()
-profile = root.find(".//publishProfile[@publishMethod='MSDeploy']")
-print(profile.get('publishUrl').split(':')[0])
-PY
-)
+          USER=$(python -c "import xml.etree.ElementTree as ET; root=ET.parse('publishProfile.xml').getroot(); p=root.find(\".//publishProfile[@publishMethod='MSDeploy']\"); print(p.get('userName'))")
+          PASS=$(python -c "import xml.etree.ElementTree as ET; root=ET.parse('publishProfile.xml').getroot(); p=root.find(\".//publishProfile[@publishMethod='MSDeploy']\"); print(p.get('userPWD'))")
+          SCM=$(python -c "import xml.etree.ElementTree as ET; root=ET.parse('publishProfile.xml').getroot(); p=root.find(\".//publishProfile[@publishMethod='MSDeploy']\"); print(p.get('publishUrl').split(':')[0])")
           echo "Deploying to $SCM"
           curl -sS -u "$USER:$PASS" -X POST "https://$SCM/api/zipdeploy" --data-binary "@${{ env.PACKAGE_PATH }}"
