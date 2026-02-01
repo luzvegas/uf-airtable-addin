@@ -189,7 +189,8 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin-top: 12px;
+  margin-top: 8px;
+  margin-bottom: 0;
 }
 
 .person-form {
@@ -206,6 +207,16 @@ textarea {
   align-self: flex-start;
   padding: 6px 10px;
   font-size: 12px;
+}
+
+.primary.small {
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
+.centered {
+  align-self: center;
+  margin-top: 8px;
 }
 
 .notice {
@@ -372,20 +383,20 @@ textarea {
 
 .tab-btn {
   padding: 16px 18px;
-  border: none;
+  border: 1px solid #c8c6c4;
   border-bottom: none;
-  background: #03588C;
+  background: #ffffff;
   cursor: pointer;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--text-main);
   border-radius: 8px 8px 0 0;
   margin-right: 4px;
 }
 
 .tab-btn.active {
-  background: #ffffff;
-  color: var(--text-main);
-  border-color: #c8c6c4;
+  background: #03588C;
+  color: #ffffff;
+  border-color: #03588C;
   border-bottom: none;
 }
 
