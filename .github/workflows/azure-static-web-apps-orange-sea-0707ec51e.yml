@@ -32,6 +32,27 @@ jobs:
                const coredemo = require('@actions/core')
                return await coredemo.getIDToken()
            result-encoding: string
+      - name: Write .env for static build
+        run: |
+          cat > AirtableOutlookAddIn/.env <<EOF
+          AIRTABLE_PAT=${{ secrets.AIRTABLE_PAT }}
+          AIRTABLE_BASE_TASKS=${{ vars.AIRTABLE_BASE_TASKS }}
+          AIRTABLE_BASE_EVENTS=${{ vars.AIRTABLE_BASE_EVENTS }}
+          AIRTABLE_BASE_DOCUMENTS=${{ vars.AIRTABLE_BASE_DOCUMENTS }}
+          AIRTABLE_BASE_PROJECTS=${{ vars.AIRTABLE_BASE_PROJECTS }}
+          AIRTABLE_BASE_PERSONS=${{ vars.AIRTABLE_BASE_PERSONS }}
+          AIRTABLE_BASE_NOTES=${{ vars.AIRTABLE_BASE_NOTES }}
+          AIRTABLE_TABLE_TASKS=${{ vars.AIRTABLE_TABLE_TASKS }}
+          AIRTABLE_TABLE_EVENTS=${{ vars.AIRTABLE_TABLE_EVENTS }}
+          AIRTABLE_TABLE_DOCUMENTS=${{ vars.AIRTABLE_TABLE_DOCUMENTS }}
+          AIRTABLE_TABLE_PROJECTS=${{ vars.AIRTABLE_TABLE_PROJECTS }}
+          AIRTABLE_TABLE_PERSONS=${{ vars.AIRTABLE_TABLE_PERSONS }}
+          AIRTABLE_TABLE_NOTES=${{ vars.AIRTABLE_TABLE_NOTES }}
+          GRAPH_CLIENT_ID=${{ vars.GRAPH_CLIENT_ID }}
+          GRAPH_TENANT_ID=${{ vars.GRAPH_TENANT_ID }}
+          GRAPH_REDIRECT_URI=${{ vars.GRAPH_REDIRECT_URI }}
+          TITLE_PROXY_URL=${{ vars.TITLE_PROXY_URL }}
+          EOF
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
