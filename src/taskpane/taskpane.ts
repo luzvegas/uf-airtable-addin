@@ -632,6 +632,8 @@ async function handleCreatePersonFromSender() {
     const nameInput = document.getElementById("person-name") as HTMLInputElement | null;
     const roleInput = document.getElementById("person-role-input") as HTMLInputElement | null;
     const positionInput = document.getElementById("person-position") as HTMLInputElement | null;
+    const mobileInput = document.getElementById("person-phone-mobile") as HTMLInputElement | null;
+    const phoneInput = document.getElementById("person-phone") as HTMLInputElement | null;
     const companyInput = document.getElementById("person-company-input") as HTMLInputElement | null;
     const email = emailInput?.value?.trim() || senderEmail || "";
     const signatureName = extractSignatureName(messageBodyText);
@@ -663,8 +665,8 @@ async function handleCreatePersonFromSender() {
     const payload: AirtablePersonPayload = {
       name,
       email: email || undefined,
-      phoneMobile: signatureInfo.mobile || undefined,
-      phone: signatureInfo.phone || undefined,
+      phoneMobile: mobileInput?.value?.trim() || signatureInfo.mobile || undefined,
+      phone: phoneInput?.value?.trim() || signatureInfo.phone || undefined,
       roleValues: roleValues.length ? roleValues : undefined,
       position: position || undefined,
       companyRecordIds: companyRecordIds.length ? companyRecordIds : undefined,
@@ -816,14 +818,23 @@ function prefillFormDefaults(metadata: OutlookMessageMetadata) {
 function prefillPersonDefaults(item: Office.MessageRead) {
   const nameInput = document.getElementById("person-name") as HTMLInputElement | null;
   const emailInput = document.getElementById("person-email") as HTMLInputElement | null;
+  const mobileInput = document.getElementById("person-phone-mobile") as HTMLInputElement | null;
+  const phoneInput = document.getElementById("person-phone") as HTMLInputElement | null;
   const displayName = item.from?.displayName?.trim() || "";
   const email = item.from?.emailAddress?.trim() || senderEmail || "";
   const signatureName = extractSignatureName(messageBodyText);
+  const signatureInfo = extractSignatureInfo(messageBodyText);
   if (nameInput && !nameInput.value) {
     nameInput.value = displayName || signatureName || (email ? email.split("@")[0] : "");
   }
   if (emailInput && !emailInput.value) {
     emailInput.value = email;
+  }
+  if (mobileInput && !mobileInput.value && signatureInfo.mobile) {
+    mobileInput.value = signatureInfo.mobile;
+  }
+  if (phoneInput && !phoneInput.value && signatureInfo.phone) {
+    phoneInput.value = signatureInfo.phone;
   }
 }
 
