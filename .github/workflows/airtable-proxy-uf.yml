@@ -9,6 +9,7 @@ on:
 env:
   NODE_VERSION: '20'
   FUNCTION_PATH: 'airtable-proxy'
+  PACKAGE_PATH: '${{ github.workspace }}/release.zip'
 
 jobs:
   build_and_deploy:
@@ -41,7 +42,7 @@ jobs:
       - name: Package function app
         run: |
           cd ${{ env.FUNCTION_PATH }}
-          zip -r ../release.zip .
+          zip -r "${{ env.PACKAGE_PATH }}" .
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -55,4 +56,4 @@ jobs:
         with:
           app-name: airtable-proxy-uf
           slot-name: Production
-          package: release.zip
+          package: ${{ env.PACKAGE_PATH }}
