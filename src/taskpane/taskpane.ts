@@ -420,6 +420,7 @@ function renderLinkOptions() {
 
 async function loadCompanies() {
   const datalist = document.getElementById("person-company-datalist") as HTMLDataListElement | null;
+  const status = document.getElementById("company-select-status");
   if (!datalist) {
     return;
   }
@@ -439,11 +440,21 @@ async function loadCompanies() {
       }
       datalist.appendChild(option);
     });
+    if (status) {
+      status.textContent = companyOptions.length
+        ? `${companyOptions.length} Firmen geladen.`
+        : "Keine Firmen gefunden. Bitte recID manuell eingeben.";
+      status.className = companyOptions.length ? "status success" : "status info";
+    }
     prefillCompanyFromSender();
   } catch (error) {
     console.error("Firmen konnten nicht geladen werden:", error);
     companyOptions = [];
     datalist.innerHTML = "";
+    if (status) {
+      status.textContent = `Firmen konnten nicht geladen werden: ${(error as Error).message}`;
+      status.className = "status error";
+    }
   }
 }
 
