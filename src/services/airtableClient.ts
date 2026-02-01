@@ -1,10 +1,12 @@
 import { defaultAirtableConfig } from "../config/airtableConfig";
 import {
   AirtableDocumentPayload,
+  AirtablePersonPayload,
   AirtableProjectOption,
   AirtableRecordResponse,
   AirtableNotePayload,
   AirtableTaskPayload,
+  AirtableCompanyOption,
   CollaboratorOption,
 } from "../types/airtable";
 
@@ -206,6 +208,51 @@ export class AirtableClient {
     return this.createRecord(this.config.baseIds.notes || this.config.baseIds.tasks, this.config.tableNames.notes, fields);
   }
 
+  async createPerson(payload: AirtablePersonPayload) {
+    const fields: Record<string, unknown> = {
+      fldc59tueuvg2S88t: payload.name, // Name
+      ...(payload.email ? { fldjknUa9bexE7aQz: payload.email } : {}), // E-Mail
+      ...(payload.phoneMobile ? { fldxsKlAJbHLXHsBo: payload.phoneMobile } : {}), // Telefon (Mobil)
+      ...(payload.phone ? { fldJx1OuZVhFJdYys: payload.phone } : {}), // Telefon
+      ...(payload.position ? { fldRblZvAWInAf3ZA: payload.position } : {}), // Position
+    };
+
+    if (payload.roleValues?.length) {
+      fields.fldhH6gkiXJ8r5E4C = payload.roleValues; // Rolle (multiple select)
+    }
+
+    if (payload.companyRecordIds?.length) {
+      const valid = payload.companyRecordIds.filter((id) => id.startsWith("rec"));
+      if (valid.length) {
+        fields.fldKg2TWXArwWDuPj = valid; // Firmen (linked record IDs)
+      }
+    }
+
+    return this.createRecord(this.config.baseIds.persons || this.config.baseIds.tasks, this.config.tableNames.persons, fields);
+  }
+
+  async findPersonByEmail(email: string): Promise<AirtableProjectOption | null> {
+    if (!email) {
+      return null;
+    }
+    const baseId = this.config.baseIds.persons || this.config.baseIds.tasks;
+    const tableName = this.config.tableNames.persons;
+    const formula = `LOWER({E-Mail})='${escapeAirtableFormulaValue(email.toLowerCase())}'`;
+    const records = await this.listRecords<Record<string, unknown>>(baseId, tableName, {
+      filterByFormula: formula,
+      fields: ["Name", "E-Mail"],
+    });
+    if (!records.length) {
+      return null;
+    }
+    const record = records[0];
+    return {
+      id: record.id,
+      name: pickProjectName(record.fields) ?? record.id,
+      email: pickEmail(record.fields),
+    };
+  }
+
   async fetchProjects(): Promise<AirtableProjectOption[]> {
     const baseId = this.config.baseIds.projects || this.config.baseIds.tasks;
     const tableName = this.config.tableNames.projects;
@@ -278,6 +325,58 @@ export class AirtableClient {
       email: pickEmail(record.fields),
     }));
   }
+
+  async fetchCompanies(): Promise<AirtableCompanyOption[]> {
+    const baseId = this.config.baseIds.companies || this.config.baseIds.tasks;
+    const tableName = this.config.tableNames.companies;
+    if (!baseId || baseId.startsWith("AIRTABLE_BASE_ID")) {
+      return [];
+    }
+    const records = await this.listRecords<Record<string, unknown>>(baseId, tableName);
+    return records.map((record) => ({
+      id: record.id,
+      name: pickCompanyName(record.fields) ?? record.id,
+      email: pickCompanyEmail(record.fields),
+      website: pickCompanyWebsite(record.fields),
+    }));
+  }
+
+  async fetchPersonRoles(): Promise<string[]> {
+    const baseId = this.config.baseIds.persons || this.config.baseIds.tasks;
+    const tableName = this.config.tableNames.persons;
+    try {
+      const metadataUrl = `https://api.airtable.com/v0/meta/bases/${baseId}/tables`;
+      const response = await fetch(metadataUrl, {
+        headers: {
+          Authorization: `Bearer ${this.config.personalAccessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Airtable metadata error ${response.status}: ${await response.text()}`);
+      }
+
+      const body = (await response.json()) as {
+        tables: Array<{
+          name: string;
+          fields: Array<{ name: string; type: string; options?: { choices?: Array<{ name: string }> } }>;
+        }>;
+      };
+
+      const table = body.tables.find((t) => t.name === tableName);
+      if (!table) {
+        return [];
+      }
+      const field = table.fields.find((f) => f.name === "Rolle" && f.type === "multipleSelects");
+      if (!field?.options?.choices) {
+        return [];
+      }
+      return field.options.choices.map((choice) => choice.name).filter(Boolean);
+    } catch (error) {
+      console.warn("Person roles fallback used due to error:", error);
+      return [];
+    }
+  }
 }
 
 function fallbackCollaborators(): CollaboratorOption[] {
@@ -326,6 +425,43 @@ function pickEmail(fields: Record<string, unknown>): string | undefined {
     return fields.email.trim();
   }
   return undefined;
+}
+
+function pickCompanyName(fields: Record<string, unknown>): string | undefined {
+  if (typeof fields.Firmenname === "string" && fields.Firmenname.trim()) {
+    return fields.Firmenname.trim();
+  }
+  if (typeof fields.Name === "string" && fields.Name.trim()) {
+    return fields.Name.trim();
+  }
+  return pickProjectName(fields);
+}
+
+function pickCompanyEmail(fields: Record<string, unknown>): string | undefined {
+  if (typeof fields["E-Mail"] === "string" && fields["E-Mail"].trim()) {
+    return fields["E-Mail"].trim();
+  }
+  if (typeof fields.Email === "string" && fields.Email.trim()) {
+    return fields.Email.trim();
+  }
+  if (typeof fields.email === "string" && fields.email.trim()) {
+    return fields.email.trim();
+  }
+  return undefined;
+}
+
+function pickCompanyWebsite(fields: Record<string, unknown>): string | undefined {
+  if (typeof fields.Webseite === "string" && fields.Webseite.trim()) {
+    return fields.Webseite.trim();
+  }
+  if (typeof fields.Website === "string" && fields.Website.trim()) {
+    return fields.Website.trim();
+  }
+  return undefined;
+}
+
+function escapeAirtableFormulaValue(value: string): string {
+  return value.replace(/'/g, "\\'");
 }
 
 export const airtableClient = new AirtableClient();

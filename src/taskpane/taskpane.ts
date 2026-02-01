@@ -9,6 +9,8 @@ import { airtableClient } from "../services/airtableClient";
 import {
   AirtableAttachmentInput,
   AirtableDocumentPayload,
+  AirtablePersonPayload,
+  AirtableCompanyOption,
   AirtableProjectOption,
   AirtableTaskPayload,
   CollaboratorOption,
@@ -31,9 +33,12 @@ const GRAPH_REDIRECT_URI = (process.env.GRAPH_REDIRECT_URI || "").trim();
 let attachments: OutlookAttachmentPreview[] = [];
 let detectedLinks: string[] = [];
 let messageMetadata: OutlookMessageMetadata | null = null;
+let messageBodyText = "";
 let projectOptions: AirtableProjectOption[] = [];
 let collaboratorOptions: CollaboratorOption[] = [];
 let externalOptions: AirtableProjectOption[] = [];
+let companyOptions: AirtableCompanyOption[] = [];
+let personRoleOptions: string[] = [];
 let senderEmail: string | undefined;
 let cachedGraphToken: string | null = null;
 let notePersonTokens: string[] = [];
@@ -56,7 +61,14 @@ async function initializePane() {
   setUiVersion();
   wireUpForms();
   setupTabs();
-  await Promise.all([hydrateContext(), loadProjects(), loadCollaborators(), loadExternalPersons()]);
+  await Promise.all([
+    hydrateContext(),
+    loadProjects(),
+    loadCollaborators(),
+    loadExternalPersons(),
+    loadCompanies(),
+    loadPersonRoles(),
+  ]);
 }
 
 function setUiVersion() {
@@ -81,6 +93,11 @@ function wireUpForms() {
   const noteForm = document.getElementById("note-form");
   if (noteForm) {
     noteForm.addEventListener("submit", handleNoteSubmit);
+  }
+
+  const createPersonBtn = document.getElementById("create-person-btn");
+  if (createPersonBtn) {
+    createPersonBtn.addEventListener("click", handleCreatePersonFromSender);
   }
 
   const notePersonsInput = document.getElementById("note-persons") as HTMLInputElement | null;
@@ -134,9 +151,10 @@ async function hydrateContext() {
   renderAttachmentGroups();
   renderDocumentAttachmentSelect();
   renderLinkOptions();
-  const bodyText = await getBodyAsText(mailboxItem);
-  prefillBodyIntoDescription(bodyText);
-  prefillNoteDefaults(bodyText);
+  messageBodyText = await getBodyAsText(mailboxItem);
+  prefillBodyIntoDescription(messageBodyText);
+  prefillNoteDefaults(messageBodyText);
+  prefillPersonDefaults(mailboxItem);
 }
 
 async function loadProjects() {
@@ -395,6 +413,55 @@ function renderLinkOptions() {
   }
 }
 
+async function loadCompanies() {
+  const datalist = document.getElementById("person-company-datalist") as HTMLDataListElement | null;
+  if (!datalist) {
+    return;
+  }
+  try {
+    companyOptions = await airtableClient.fetchCompanies();
+    datalist.innerHTML = "";
+    companyOptions.forEach((company) => {
+      const option = document.createElement("option");
+      option.value = company.name;
+      option.label = "";
+      option.dataset.id = company.id;
+      if (company.email) {
+        option.dataset.email = company.email;
+      }
+      if (company.website) {
+        option.dataset.website = company.website;
+      }
+      datalist.appendChild(option);
+    });
+    prefillCompanyFromSender();
+  } catch (error) {
+    console.error("Firmen konnten nicht geladen werden:", error);
+    companyOptions = [];
+    datalist.innerHTML = "";
+  }
+}
+
+async function loadPersonRoles() {
+  const datalist = document.getElementById("person-role-datalist") as HTMLDataListElement | null;
+  if (!datalist) {
+    return;
+  }
+  try {
+    personRoleOptions = await airtableClient.fetchPersonRoles();
+    datalist.innerHTML = "";
+    personRoleOptions.forEach((role) => {
+      const option = document.createElement("option");
+      option.value = role;
+      datalist.appendChild(option);
+    });
+  } catch (error) {
+    console.error("Rollen konnten nicht geladen werden:", error);
+    personRoleOptions = [];
+    datalist.innerHTML = "";
+  }
+}
+
 function filterLink(url: string, count: number): boolean {
   const lower = url.toLowerCase();
   if (lower.includes("safelinks.protection.outlook.com")) return false;
@@ -532,6 +599,58 @@ async function handleNoteSubmit(event: Event) {
   await executeWithStatus("note-status", () => airtableClient.createNote(payload));
 }
 
+async function handleCreatePersonFromSender() {
+  if (!messageMetadata) {
+    return;
+  }
+
+  setStatus("person-status", "Person wird erstellt ...", "pending");
+  try {
+    const emailInput = document.getElementById("person-email") as HTMLInputElement | null;
+    const nameInput = document.getElementById("person-name") as HTMLInputElement | null;
+    const roleInput = document.getElementById("person-role-input") as HTMLInputElement | null;
+    const positionInput = document.getElementById("person-position") as HTMLInputElement | null;
+    const companyInput = document.getElementById("person-company-input") as HTMLInputElement | null;
+    const email = emailInput?.value?.trim() || senderEmail || "";
+    const name = nameInput?.value?.trim() || (email ? email.split("@")[0] : "Unbekannt");
+    const roles = roleInput?.value
+      ? roleInput.value
+          .split(/[,;
+]/)
+          .map((entry) => entry.trim())
+          .filter(Boolean)
+      : [];
+    const roleValues = normalizeRoleValues(roles);
+    const position = positionInput?.value?.trim() || "";
+    const companyRecordIds = resolveCompanyRecordIds(companyInput?.value || "");
+
+    if (email) {
+      const existing = await airtableClient.findPersonByEmail(email);
+      if (existing) {
+        setStatus("person-status", `Person existiert bereits: ${existing.name}`, "success");
+        return;
+      }
+    }
+
+    const signatureInfo = extractSignatureInfo(messageBodyText);
+    const payload: AirtablePersonPayload = {
+      name,
+      email: email || undefined,
+      phoneMobile: signatureInfo.mobile || undefined,
+      phone: signatureInfo.phone || undefined,
+      roleValues: roleValues.length ? roleValues : undefined,
+      position: position || undefined,
+      companyRecordIds: companyRecordIds.length ? companyRecordIds : undefined,
+    };
+
+    await airtableClient.createPerson(payload);
+    setStatus("person-status", "Person wurde in Airtable angelegt.", "success");
+  } catch (error) {
+    console.error(error);
+    setStatus("person-status", `Fehler beim Erstellen: ${(error as Error).message}`, "error");
+  }
+}
+
 async function executeWithStatus(
   elementId: string,
   action: () => Promise<unknown> | unknown
@@ -667,6 +786,19 @@ function prefillFormDefaults(metadata: OutlookMessageMetadata) {
   }
 }
 
+function prefillPersonDefaults(item: Office.MessageRead) {
+  const nameInput = document.getElementById("person-name") as HTMLInputElement | null;
+  const emailInput = document.getElementById("person-email") as HTMLInputElement | null;
+  const displayName = item.from?.displayName?.trim() || "";
+  const email = item.from?.emailAddress?.trim() || senderEmail || "";
+  if (nameInput && !nameInput.value) {
+    nameInput.value = displayName || (email ? email.split("@")[0] : "");
+  }
+  if (emailInput && !emailInput.value) {
+    emailInput.value = email;
+  }
+}
+
 function setIfEmpty(elementId: string, value?: string) {
   const element = document.getElementById(elementId) as HTMLInputElement | HTMLTextAreaElement | null;
   if (!element || !value) {
@@ -742,6 +874,18 @@ function resolveExternalAssignees(rawEntries: string[]): string[] {
     }
   });
   return Array.from(new Set(ids)).filter((id) => id && id.startsWith("rec"));
+}
+
+function resolveCompanyRecordIds(rawEntry: string): string[] {
+  const value = rawEntry.trim();
+  if (!value) {
+    return [];
+  }
+  if (value.startsWith("rec")) {
+    return [value];
+  }
+  const match = companyOptions.find((company) => company.name.toLowerCase() === value.toLowerCase());
+  return match ? [match.id] : [];
 }
 
 function renderExternalOptions() {
@@ -895,6 +1039,28 @@ function prefillNoteDefaults(body: string) {
   }
 }
 
+function prefillCompanyFromSender() {
+  const input = document.getElementById("person-company-input") as HTMLInputElement | null;
+  if (!input || !senderEmail || !companyOptions.length) {
+    return;
+  }
+  const domain = senderEmail.split("@")[1]?.toLowerCase() || "";
+  if (!domain) {
+    return;
+  }
+  const match = companyOptions.find((company) => {
+    const emailDomain = company.email?.split("@")[1]?.toLowerCase();
+    if (emailDomain && emailDomain === domain) {
+      return true;
+    }
+    const websiteDomain = company.website ? extractDomain(company.website) : "";
+    return websiteDomain && websiteDomain === domain;
+  });
+  if (match) {
+    input.value = match.name;
+  }
+}
+
 function limitBodyText(text: string, maxLength = 12000): string {
   if (!text) return "";
   if (text.length <= maxLength) return text;
@@ -904,6 +1070,71 @@ function limitBodyText(text: string, maxLength = 12000): string {
 function normalizeBodyText(text: string): string {
   if (!text) return "";
   return text.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+function normalizeRoleValues(values: string[]): string[] {
+  if (!values.length) {
+    return [];
+  }
+  if (!personRoleOptions.length) {
+    return values;
+  }
+  return values.filter((value) =>
+    personRoleOptions.some((role) => role.toLowerCase() === value.toLowerCase())
+  );
+}
+
+function extractDomain(raw: string): string {
+  try {
+    const url = raw.includes("://") ? raw : `https://${raw}`;
+    return new URL(url).hostname.replace(/^www\./, "").toLowerCase();
+  } catch (error) {
+    return raw.replace(/^www\./, "").toLowerCase();
+  }
+}
+
+function extractSignatureInfo(text: string): { mobile?: string; phone?: string } {
+  if (!text) {
+    return {};
+  }
+  const lines = text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const tail = lines.slice(-24);
+  const phoneMatches = tail.flatMap((line) => {
+    const matches = line.match(/(\+?\d[\d\s().-]{6,}\d)/g);
+    if (!matches) return [];
+    return matches.map((match) => ({ line, value: match }));
+  });
+
+  const cleaned = phoneMatches.map((entry) => ({
+    line: entry.line.toLowerCase(),
+    value: entry.value.replace(/\s+/g, " ").trim(),
+  }));
+
+  let mobile: string | undefined;
+  let phone: string | undefined;
+
+  cleaned.forEach((entry) => {
+    if (!mobile && /(mobile|mobil|handy|cell|mobi)/i.test(entry.line)) {
+      mobile = entry.value;
+      return;
+    }
+    if (!phone && /(tel|telefon|phone|office|fon)/i.test(entry.line)) {
+      phone = entry.value;
+      return;
+    }
+    if (!phone) {
+      phone = entry.value;
+      return;
+    }
+    if (!mobile) {
+      mobile = entry.value;
+    }
+  });
+
+  return { mobile, phone };
 }
 
 function getSelectedInternalOwnerId(): string | undefined {

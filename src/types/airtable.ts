@@ -71,6 +71,23 @@ export interface AirtableNotePayload {
   message: OutlookMessageMetadata;
 }
 
+export interface AirtablePersonPayload {
+  name: string;
+  email?: string;
+  phoneMobile?: string;
+  phone?: string;
+  roleValues?: string[];
+  position?: string;
+  companyRecordIds?: string[];
+}
+
+export interface AirtableCompanyOption {
+  id: string;
+  name: string;
+  email?: string;
+  website?: string;
+}
+
 export interface AirtableRecordResponse {
   id: string;
   createdTime: string;

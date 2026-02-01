@@ -48,11 +48,34 @@
                 <dt>Eingang</dt>
                 <dd id="mail-date">-</dd>
             </dl>
+            <div class="mail-actions">
+                <button id="create-person-btn" type="button" class="secondary">Person aus Absender anlegen</button>
+                <p id="person-status" class="status"></p>
+            </div>
+            <div class="person-form">
+                <label>Name
+                    <input id="person-name" type="text" placeholder="Name der Person" />
+                </label>
+                <label>E-Mail
+                    <input id="person-email" type="email" placeholder="name@firma.ch" />
+                </label>
+                <label>Firma
+                    <input list="person-company-datalist" id="person-company-input" type="text" placeholder="Firma suchen oder recID eingeben" />
+                    <datalist id="person-company-datalist"></datalist>
+                </label>
+                <label>Rolle
+                    <input list="person-role-datalist" id="person-role-input" type="text" placeholder="Rolle(n) suchen oder eingeben" />
+                    <datalist id="person-role-datalist"></datalist>
+                </label>
+                <label>Position
+                    <input id="person-position" type="text" placeholder="z.B. Producer, IT Lead" />
+                </label>
+            </div>
         </section>
 
         <div class="tabs">
-            <button class="tab-btn active" data-tab-target="tab-tasks">Tasks &amp; Termine</button>
-            <button class="tab-btn" data-tab-target="tab-docs">Dokumente &amp; Links</button>
+            <button class="tab-btn active" data-tab-target="tab-tasks">Tasks/Termine</button>
+            <button class="tab-btn" data-tab-target="tab-docs">Dokumente/Links</button>
             <button class="tab-btn" data-tab-target="tab-notes">Gesprächsnotizen</button>
         </div>
 

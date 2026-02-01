@@ -170,6 +170,34 @@ textarea {
   background: var(--button-hover);
 }
 
+.secondary {
+  border: 1px solid #d2d0ce;
+  background: #ffffff;
+  color: var(--text-main);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.secondary:hover {
+  background: #f7f7f7;
+}
+
+.mail-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.person-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+
 .notice {
   border: 1px dashed #c8c6c4;
   text-align: center;
