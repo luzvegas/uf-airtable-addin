@@ -615,8 +615,7 @@ async function handleCreatePersonFromSender() {
     const name = nameInput?.value?.trim() || (email ? email.split("@")[0] : "Unbekannt");
     const roles = roleInput?.value
       ? roleInput.value
-          .split(/[,;
-]/)
+          .split(/[,;\n]/)
           .map((entry) => entry.trim())
           .filter(Boolean)
       : [];
