@@ -2,6 +2,7 @@ import { defaultAirtableConfig } from "../config/airtableConfig";
 import {
   AirtableDocumentPayload,
   AirtablePersonPayload,
+  AirtableCompanyPayload,
   AirtableProjectOption,
   AirtableRecordResponse,
   AirtableNotePayload,
@@ -282,6 +283,47 @@ export class AirtableClient {
       this.config.tableNames.persons,
       fields
     );
+  }
+
+  async createCompany(payload: AirtableCompanyPayload) {
+    const fields: Record<string, unknown> = {
+      fldmITToK7sLr9p9O: payload.name, // Firmenname
+      ...(payload.email ? { fld54oqgUsBHnNFCa: payload.email } : {}), // E-Mail
+      ...(payload.phone ? { fldWp2bz7Ru7jj7YX: payload.phone } : {}), // Telefon
+      ...(payload.website ? { fldb1CFwpD1401SST: payload.website } : {}), // Webseite
+      ...(payload.street ? { fldF4dudLsTjTub4l: payload.street } : {}), // Strasse
+      ...(payload.houseNumber ? { fldldbvNFOA8dW9oV: payload.houseNumber } : {}), // Hausnummer
+      ...(payload.zip !== undefined ? { fldfwId2Hve27J1bo: payload.zip } : {}), // PLZ
+      ...(payload.city ? { fldiAinnORZ3C13aL: payload.city } : {}), // Ort
+      ...(payload.country ? { fld8oORAAn6bT5zMe: payload.country } : {}), // Land
+      ...(payload.language ? { fldmjPI2d2cXVglhM: payload.language } : {}), // Sprache
+      ...(payload.categories?.length ? { fld7HEVhIfnFk5ZAt: payload.categories } : {}), // Kategorie
+    };
+
+    return this.createRecord(this.config.baseIds.companies || this.config.baseIds.tasks, this.config.tableNames.companies, fields);
+  }
+
+  async findCompanyByName(name: string): Promise<AirtableCompanyOption | null> {
+    if (!name) {
+      return null;
+    }
+    const baseId = this.config.baseIds.companies || this.config.baseIds.tasks;
+    const tableName = this.config.tableNames.companies;
+    const formula = `LOWER({Firmenname})='${escapeAirtableFormulaValue(name.toLowerCase())}'`;
+    const records = await this.listRecords<Record<string, unknown>>(baseId, tableName, {
+      filterByFormula: formula,
+      fields: ["Firmenname", "E-Mail", "Webseite"],
+    });
+    if (!records.length) {
+      return null;
+    }
+    const record = records[0];
+    return {
+      id: record.id,
+      name: pickCompanyName(record.fields) ?? record.id,
+      email: pickCompanyEmail(record.fields),
+      website: pickCompanyWebsite(record.fields),
+    };
   }
 
   async updatePerson(recordId: string, payload: Partial<AirtablePersonPayload>) {

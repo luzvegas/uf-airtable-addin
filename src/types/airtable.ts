@@ -81,6 +81,20 @@ export interface AirtablePersonPayload {
   companyRecordIds?: string[];
 }
 
+export interface AirtableCompanyPayload {
+  name: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+  street?: string;
+  houseNumber?: string;
+  zip?: number;
+  city?: string;
+  country?: string;
+  language?: string;
+  categories?: string[];
+}
+
 export interface AirtableCompanyOption {
   id: string;
   name: string;

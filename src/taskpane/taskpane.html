@@ -79,6 +79,58 @@
                     <p id="person-status" class="status"></p>
                 </div>
             </div>
+            <button id="company-toggle" type="button" class="primary small centered">Firma erfassen</button>
+            <div class="company-form collapsed" id="company-form">
+                <label>Firmenname
+                    <input id="company-name" type="text" placeholder="Firmenname" required />
+                </label>
+                <label>E-Mail
+                    <input id="company-email" type="email" placeholder="info@firma.ch" />
+                </label>
+                <label>Telefon
+                    <input id="company-phone" type="text" placeholder="+41 44 123 45 67" />
+                </label>
+                <label>Webseite
+                    <input id="company-website" type="url" placeholder="https://firma.ch" />
+                </label>
+                <label>Strasse
+                    <input id="company-street" type="text" placeholder="Strasse" />
+                </label>
+                <label>Hausnummer
+                    <input id="company-house-number" type="text" placeholder="Nr." />
+                </label>
+                <label>PLZ
+                    <input id="company-zip" type="number" placeholder="8000" />
+                </label>
+                <label>Ort
+                    <input id="company-city" type="text" placeholder="Ort" />
+                </label>
+                <label>Land
+                    <select id="company-country">
+                        <option value="">Nicht gesetzt</option>
+                        <option value="Schweiz">Schweiz</option>
+                        <option value="Deutschland">Deutschland</option>
+                        <option value="USA">USA</option>
+                        <option value="Grossbritannien">Grossbritannien</option>
+                        <option value="Norwegen">Norwegen</option>
+                    </select>
+                </label>
+                <label>Sprache
+                    <select id="company-language">
+                        <option value="">Nicht gesetzt</option>
+                        <option value="Deutsch">Deutsch</option>
+                        <option value="Englisch">Englisch</option>
+                    </select>
+                </label>
+                <label>Kategorie (mehrere mÃ¶glich)
+                    <input id="company-category" type="text" placeholder="z.B. Kunde, VFX" />
+                    <span class="input-hint">Mehrere Kategorien mit Komma trennen.</span>
+                </label>
+                <div class="mail-actions">
+                    <button id="create-company-btn" type="button" class="primary">Firma anlegen</button>
+                    <p id="company-status" class="status"></p>
+                </div>
+            </div>
         </section>
 
         <div class="tabs">

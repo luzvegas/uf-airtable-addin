@@ -10,6 +10,7 @@ import {
   AirtableAttachmentInput,
   AirtableDocumentPayload,
   AirtablePersonPayload,
+  AirtableCompanyPayload,
   AirtableCompanyOption,
   AirtableProjectOption,
   AirtableTaskPayload,
@@ -100,9 +101,19 @@ function wireUpForms() {
     createPersonBtn.addEventListener("click", handleCreatePersonFromSender);
   }
 
+  const createCompanyBtn = document.getElementById("create-company-btn");
+  if (createCompanyBtn) {
+    createCompanyBtn.addEventListener("click", handleCreateCompanyFromForm);
+  }
+
   const personToggle = document.getElementById("person-toggle");
   if (personToggle) {
     personToggle.addEventListener("click", togglePersonForm);
+  }
+
+  const companyToggle = document.getElementById("company-toggle");
+  if (companyToggle) {
+    companyToggle.addEventListener("click", toggleCompanyForm);
   }
 
   const notePersonsInput = document.getElementById("note-persons") as HTMLInputElement | null;
@@ -701,6 +712,67 @@ async function handleCreatePersonFromSender() {
   }
 }
 
+async function handleCreateCompanyFromForm() {
+  setStatus("company-status", "Firma wird erstellt ...", "pending");
+  try {
+    const nameInput = document.getElementById("company-name") as HTMLInputElement | null;
+    const emailInput = document.getElementById("company-email") as HTMLInputElement | null;
+    const phoneInput = document.getElementById("company-phone") as HTMLInputElement | null;
+    const websiteInput = document.getElementById("company-website") as HTMLInputElement | null;
+    const streetInput = document.getElementById("company-street") as HTMLInputElement | null;
+    const houseInput = document.getElementById("company-house-number") as HTMLInputElement | null;
+    const zipInput = document.getElementById("company-zip") as HTMLInputElement | null;
+    const cityInput = document.getElementById("company-city") as HTMLInputElement | null;
+    const countryInput = document.getElementById("company-country") as HTMLSelectElement | null;
+    const languageInput = document.getElementById("company-language") as HTMLSelectElement | null;
+    const categoryInput = document.getElementById("company-category") as HTMLInputElement | null;
+    const personCompanyInput = document.getElementById("person-company-input") as HTMLInputElement | null;
+
+    const fallbackName = personCompanyInput?.value?.trim() || "";
+    const name = nameInput?.value?.trim() || fallbackName;
+    if (!name) {
+      setStatus("company-status", "Bitte einen Firmennamen eingeben.", "error");
+      return;
+    }
+
+    const existing =
+      companyOptions.find((company) => company.name.toLowerCase() === name.toLowerCase()) ??
+      (await airtableClient.findCompanyByName(name));
+    if (existing) {
+      setStatus("company-status", `Firma existiert bereits: ${existing.name}`, "success");
+      return;
+    }
+
+    const zipValue = zipInput?.value ? Number(zipInput.value) : undefined;
+    const categories = categoryInput?.value
+      ? categoryInput.value
+          .split(/[,;\n]/)
+          .map((entry) => entry.trim())
+          .filter(Boolean)
+      : [];
+
+    const payload: AirtableCompanyPayload = {
+      name,
+      email: emailInput?.value?.trim() || undefined,
+      phone: phoneInput?.value?.trim() || undefined,
+      website: websiteInput?.value?.trim() || undefined,
+      street: streetInput?.value?.trim() || undefined,
+      houseNumber: houseInput?.value?.trim() || undefined,
+      zip: Number.isFinite(zipValue) ? zipValue : undefined,
+      city: cityInput?.value?.trim() || undefined,
+      country: countryInput?.value || undefined,
+      language: languageInput?.value || undefined,
+      categories: categories.length ? categories : undefined,
+    };
+
+    await airtableClient.createCompany(payload);
+    setStatus("company-status", "Firma wurde in Airtable angelegt.", "success");
+  } catch (error) {
+    console.error(error);
+    setStatus("company-status", `Fehler beim Erstellen: ${(error as Error).message}`, "error");
+  }
+}
+
 async function updateExistingPerson(
   recordId: string,
   payload: AirtablePersonPayload
@@ -1238,6 +1310,16 @@ function togglePersonForm() {
   }
   const isCollapsed = container.classList.toggle("collapsed");
   toggle.textContent = isCollapsed ? "Personendetails anzeigen" : "Personendetails ausblenden";
+}
+
+function toggleCompanyForm() {
+  const container = document.getElementById("company-form");
+  const toggle = document.getElementById("company-toggle");
+  if (!container || !toggle) {
+    return;
+  }
+  const isCollapsed = container.classList.toggle("collapsed");
+  toggle.textContent = isCollapsed ? "Firma erfassen" : "Firma ausblenden";
 }
 
 function normalizeRoleValues(values: string[]): string[] {

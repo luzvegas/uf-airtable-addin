@@ -203,6 +203,16 @@ textarea {
   display: none;
 }
 
+.company-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.company-form.collapsed {
+  display: none;
+}
+
 .secondary.small {
   align-self: flex-start;
   padding: 6px 10px;
