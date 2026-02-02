@@ -682,9 +682,14 @@ async function handleCreatePersonFromSender() {
     }
 
     if (existingId) {
-      const updated = await updateExistingPerson(existingId, payload);
-      if (updated) {
-        setStatus("person-status", "Vorhandene Person wurde aktualisiert.", "success");
+      const updateResult = await updateExistingPerson(existingId, payload);
+      if (updateResult.updated) {
+        const fieldLabel = updateResult.updatedFields.join(", ");
+        setStatus(
+          "person-status",
+          `Person existiert bereits – aktualisiert: ${fieldLabel}`,
+          "success"
+        );
       } else {
         setStatus("person-status", "Person existiert bereits – keine neuen Daten.", "success");
       }
@@ -699,10 +704,13 @@ async function handleCreatePersonFromSender() {
   }
 }
 
-async function updateExistingPerson(recordId: string, payload: AirtablePersonPayload): Promise<boolean> {
+async function updateExistingPerson(
+  recordId: string,
+  payload: AirtablePersonPayload
+): Promise<{ updated: boolean; updatedFields: string[] }> {
   const existingRecord = await airtableClient.getPersonRecord(recordId);
   if (!existingRecord) {
-    return false;
+    return { updated: false, updatedFields: [] };
   }
   const fields = existingRecord.fields as Record<string, unknown>;
   const existingName = typeof fields.Name === "string" ? fields.Name.trim() : "";
@@ -714,38 +722,46 @@ async function updateExistingPerson(recordId: string, payload: AirtablePersonPay
   const existingCompanies = Array.isArray(fields.Firmen) ? (fields.Firmen as string[]) : [];
 
   const updates: Partial<AirtablePersonPayload> = {};
+  const updatedFields: string[] = [];
   if (!existingName && payload.name) {
     updates.name = payload.name;
+    updatedFields.push("Name");
   }
   if (!existingEmail && payload.email) {
     updates.email = payload.email;
+    updatedFields.push("E-Mail");
   }
   if (!existingMobile && payload.phoneMobile) {
     updates.phoneMobile = payload.phoneMobile;
+    updatedFields.push("Telefon (Mobil)");
   }
   if (!existingPhone && payload.phone) {
     updates.phone = payload.phone;
+    updatedFields.push("Telefon");
   }
   if (!existingPosition && payload.position) {
     updates.position = payload.position;
+    updatedFields.push("Position");
   }
 
   const mergedRoles = mergeUnique(existingRoles, payload.roleValues ?? []);
   if (mergedRoles.changed) {
     updates.roleValues = mergedRoles.values;
+    updatedFields.push("Rolle");
   }
 
   const mergedCompanies = mergeUnique(existingCompanies, payload.companyRecordIds ?? []);
   if (mergedCompanies.changed) {
     updates.companyRecordIds = mergedCompanies.values;
+    updatedFields.push("Firma");
   }
 
   if (!Object.keys(updates).length) {
-    return false;
+    return { updated: false, updatedFields: [] };
   }
 
   await airtableClient.updatePerson(recordId, updates);
-  return true;
+  return { updated: true, updatedFields };
 }
 
 function mergeUnique(existing: string[], incoming: string[]): { values: string[]; changed: boolean } {
