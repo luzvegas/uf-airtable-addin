@@ -53,9 +53,11 @@
             <div class="person-form collapsed" id="person-form" autocomplete="off">
                 <label>Name
                     <input id="person-name" type="text" placeholder="Name der Person" autocomplete="off" />
+                    <p id="person-duplicate-hint" class="status info"></p>
                 </label>
                 <label>E-Mail
                     <input id="person-email" type="email" placeholder="name@firma.ch" autocomplete="off" />
+                    <p id="person-email-duplicate-hint" class="status info"></p>
                 </label>
                 <label>Firma
                     <input list="person-company-datalist" id="person-company-input" type="text" placeholder="Firma suchen oder recID eingeben" autocomplete="off" />
@@ -85,6 +87,7 @@
             <div class="company-form collapsed" id="company-form" autocomplete="off">
                 <label>Firmenname
                     <input id="company-name" type="text" placeholder="Firmenname" required autocomplete="off" />
+                    <p id="company-duplicate-hint" class="status info"></p>
                 </label>
                 <label>E-Mail
                     <input id="company-email" type="email" placeholder="info@firma.ch" autocomplete="off" />

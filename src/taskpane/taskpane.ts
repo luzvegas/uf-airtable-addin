@@ -48,6 +48,9 @@ let companyCategoryTokens: string[] = [];
 let msalInstance: any | null = null;
 const linkTitleCache: Record<string, string> = {};
 let lastLookupRefreshAt = 0;
+let personNameCheckTimer: number | undefined;
+let personEmailCheckTimer: number | undefined;
+let companyNameCheckTimer: number | undefined;
 
 function getEligibleAttachments(): OutlookAttachmentPreview[] {
   return attachments.filter((att) => !att.isInline);
@@ -108,6 +111,21 @@ function wireUpForms() {
   const createCompanyBtn = document.getElementById("create-company-btn");
   if (createCompanyBtn) {
     createCompanyBtn.addEventListener("click", handleCreateCompanyFromForm);
+  }
+
+  const personNameInput = document.getElementById("person-name") as HTMLInputElement | null;
+  if (personNameInput) {
+    personNameInput.addEventListener("input", () => schedulePersonNameCheck(personNameInput.value));
+  }
+
+  const personEmailInput = document.getElementById("person-email") as HTMLInputElement | null;
+  if (personEmailInput) {
+    personEmailInput.addEventListener("input", () => schedulePersonEmailCheck(personEmailInput.value));
+  }
+
+  const companyNameInput = document.getElementById("company-name") as HTMLInputElement | null;
+  if (companyNameInput) {
+    companyNameInput.addEventListener("input", () => scheduleCompanyNameCheck(companyNameInput.value));
   }
 
   const personToggle = document.getElementById("person-toggle");
@@ -987,6 +1005,15 @@ function setStatus(elementId: string, message: string, type: "pending" | "succes
   element.className = `status ${type}`;
 }
 
+function setHint(elementId: string, message: string, type: "pending" | "success" | "error" | "info") {
+  const element = document.getElementById(elementId);
+  if (!element) {
+    return;
+  }
+  element.textContent = message;
+  element.className = `status ${type}`;
+}
+
 function getInputValue(elementId: string): string {
   const element = document.getElementById(elementId) as HTMLInputElement | HTMLTextAreaElement;
   if (!element || !element.value) {
@@ -1465,6 +1492,74 @@ function extractDomain(raw: string): string {
     return new URL(url).hostname.replace(/^www\./, "").toLowerCase();
   } catch (error) {
     return raw.replace(/^www\./, "").toLowerCase();
+  }
+}
+
+function schedulePersonNameCheck(value: string) {
+  if (personNameCheckTimer) {
+    window.clearTimeout(personNameCheckTimer);
+  }
+  personNameCheckTimer = window.setTimeout(() => checkPersonNameDuplicate(value), 400);
+}
+
+function schedulePersonEmailCheck(value: string) {
+  if (personEmailCheckTimer) {
+    window.clearTimeout(personEmailCheckTimer);
+  }
+  personEmailCheckTimer = window.setTimeout(() => checkPersonEmailDuplicate(value), 400);
+}
+
+function scheduleCompanyNameCheck(value: string) {
+  if (companyNameCheckTimer) {
+    window.clearTimeout(companyNameCheckTimer);
+  }
+  companyNameCheckTimer = window.setTimeout(() => checkCompanyNameDuplicate(value), 400);
+}
+
+function checkPersonNameDuplicate(raw: string) {
+  const name = raw.trim();
+  if (!name) {
+    setHint("person-duplicate-hint", "", "info");
+    return;
+  }
+  const match = externalOptions.find((person) => person.name?.toLowerCase() === name.toLowerCase());
+  if (match) {
+    const extra = match.email ? ` (${match.email})` : "";
+    setHint("person-duplicate-hint", `Person existiert bereits: ${match.name}${extra}`, "success");
+  } else {
+    setHint("person-duplicate-hint", "Keine bestehende Person gefunden.", "info");
+  }
+}
+
+function checkPersonEmailDuplicate(raw: string) {
+  const email = raw.trim().toLowerCase();
+  if (!email) {
+    setHint("person-email-duplicate-hint", "", "info");
+    return;
+  }
+  const match = externalOptions.find((person) => person.email?.toLowerCase() === email);
+  if (match) {
+    setHint(
+      "person-email-duplicate-hint",
+      `E-Mail existiert bereits: ${match.name ?? match.email}`,
+      "success"
+    );
+  } else {
+    setHint("person-email-duplicate-hint", "E-Mail noch nicht vorhanden.", "info");
+  }
+}
+
+function checkCompanyNameDuplicate(raw: string) {
+  const name = raw.trim();
+  if (!name) {
+    setHint("company-duplicate-hint", "", "info");
+    return;
+  }
+  const match = companyOptions.find((company) => company.name?.toLowerCase() === name.toLowerCase());
+  if (match) {
+    setHint("company-duplicate-hint", `Firma existiert bereits: ${match.name}`, "success");
+  } else {
+    setHint("company-duplicate-hint", "Keine bestehende Firma gefunden.", "info");
   }
 }
 
