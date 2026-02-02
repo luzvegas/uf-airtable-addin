@@ -1121,6 +1121,7 @@ function extractPrimaryMessageBody(text: string): string {
   }
   const separators = [
     /^Am\s.+schrieb.+:$/i,
+    /^Le\s.+a écrit\s*:$/i,
     /^On\s.+wrote:$/i,
     /^From:\s.+$/i,
     /^Von:\s.+$/i,
