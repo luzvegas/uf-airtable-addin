@@ -777,9 +777,13 @@ async function handleCreateCompanyFromForm() {
     };
 
     await airtableClient.createCompany(payload);
-    setStatus("company-status", "Firma wurde in Airtable angelegt.", "success");
+    setStatus("company-status", "Firma wurde in Airtable angelegt. Aktualisiere Liste ...", "success");
     companyCategoryTokens = [];
     renderCompanyCategoryTokens();
+    await loadCompanies();
+    if (personCompanyInput) {
+      personCompanyInput.value = name;
+    }
   } catch (error) {
     console.error(error);
     setStatus("company-status", `Fehler beim Erstellen: ${(error as Error).message}`, "error");
