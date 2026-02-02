@@ -50,65 +50,65 @@
                 <button id="person-toggle" type="button" class="primary small">Person erfassen</button>
                 <button id="company-toggle" type="button" class="primary small">Firma erfassen</button>
             </div>
-            <div class="person-form collapsed" id="person-form">
+            <div class="person-form collapsed" id="person-form" autocomplete="off">
                 <label>Name
-                    <input id="person-name" type="text" placeholder="Name der Person" />
+                    <input id="person-name" type="text" placeholder="Name der Person" autocomplete="off" />
                 </label>
                 <label>E-Mail
-                    <input id="person-email" type="email" placeholder="name@firma.ch" />
+                    <input id="person-email" type="email" placeholder="name@firma.ch" autocomplete="off" />
                 </label>
                 <label>Firma
-                    <input list="person-company-datalist" id="person-company-input" type="text" placeholder="Firma suchen oder recID eingeben" />
+                    <input list="person-company-datalist" id="person-company-input" type="text" placeholder="Firma suchen oder recID eingeben" autocomplete="off" />
                     <datalist id="person-company-datalist"></datalist>
                     <span class="input-hint">Tippe zum Suchen (Firmenname) oder fÃ¼ge eine Record-ID ein.</span>
                 </label>
                 <p id="company-select-status" class="status info"></p>
                 <label>Rolle
-                    <input list="person-role-datalist" id="person-role-input" type="text" placeholder="Rolle(n) suchen oder eingeben" required />
+                    <input list="person-role-datalist" id="person-role-input" type="text" placeholder="Rolle(n) suchen oder eingeben" required autocomplete="off" />
                     <datalist id="person-role-datalist"></datalist>
                 </label>
                 <label>Position
-                    <input id="person-position" type="text" placeholder="Wird automatisch gesetzt" disabled />
+                    <input id="person-position" type="text" placeholder="Wird automatisch gesetzt" disabled autocomplete="off" />
                     <p class="hint">Position ist ein KI-Feld in Airtable und wird dort automatisch berechnet.</p>
                 </label>
                 <label>Telefon (Mobil)
-                    <input id="person-phone-mobile" type="text" placeholder="+41 79 123 45 67" />
+                    <input id="person-phone-mobile" type="text" placeholder="+41 79 123 45 67" autocomplete="off" />
                 </label>
                 <label>Telefon
-                    <input id="person-phone" type="text" placeholder="+41 44 123 45 67" />
+                    <input id="person-phone" type="text" placeholder="+41 44 123 45 67" autocomplete="off" />
                 </label>
                 <div class="mail-actions">
                     <button id="create-person-btn" type="button" class="primary">Person aus Absender anlegen</button>
                     <p id="person-status" class="status"></p>
                 </div>
             </div>
-            <div class="company-form collapsed" id="company-form">
+            <div class="company-form collapsed" id="company-form" autocomplete="off">
                 <label>Firmenname
-                    <input id="company-name" type="text" placeholder="Firmenname" required />
+                    <input id="company-name" type="text" placeholder="Firmenname" required autocomplete="off" />
                 </label>
                 <label>E-Mail
-                    <input id="company-email" type="email" placeholder="info@firma.ch" />
+                    <input id="company-email" type="email" placeholder="info@firma.ch" autocomplete="off" />
                 </label>
                 <label>Telefon
-                    <input id="company-phone" type="text" placeholder="+41 44 123 45 67" />
+                    <input id="company-phone" type="text" placeholder="+41 44 123 45 67" autocomplete="off" />
                 </label>
                 <label>Webseite
-                    <input id="company-website" type="url" placeholder="https://firma.ch" />
+                    <input id="company-website" type="url" placeholder="https://firma.ch" autocomplete="off" />
                 </label>
                 <label>Strasse
-                    <input id="company-street" type="text" placeholder="Strasse" />
+                    <input id="company-street" type="text" placeholder="Strasse" autocomplete="off" />
                 </label>
                 <label>Hausnummer
-                    <input id="company-house-number" type="text" placeholder="Nr." />
+                    <input id="company-house-number" type="text" placeholder="Nr." autocomplete="off" />
                 </label>
                 <label>PLZ
-                    <input id="company-zip" type="number" placeholder="8000" />
+                    <input id="company-zip" type="number" placeholder="8000" autocomplete="off" />
                 </label>
                 <label>Ort
-                    <input id="company-city" type="text" placeholder="Ort" />
+                    <input id="company-city" type="text" placeholder="Ort" autocomplete="off" />
                 </label>
                 <label>Land
-                    <select id="company-country">
+                    <select id="company-country" autocomplete="off">
                         <option value="">Nicht gesetzt</option>
                         <option value="Schweiz">Schweiz</option>
                         <option value="Deutschland">Deutschland</option>
@@ -118,14 +118,14 @@
                     </select>
                 </label>
                 <label>Sprache
-                    <select id="company-language">
+                    <select id="company-language" autocomplete="off">
                         <option value="">Nicht gesetzt</option>
                         <option value="Deutsch">Deutsch</option>
                         <option value="Englisch">Englisch</option>
                     </select>
                 </label>
                 <label>Kategorie (mehrere mÃ¶glich)
-                    <input list="company-category-datalist" id="company-category" type="text" placeholder="Kategorie suchen oder eingeben" />
+                    <input list="company-category-datalist" id="company-category" type="text" placeholder="Kategorie suchen oder eingeben" autocomplete="off" />
                     <datalist id="company-category-datalist">
                         <option value="Kunde"></option>
                         <option value="Supplier"></option>
