@@ -428,7 +428,11 @@ async function loadCompanies() {
     status.textContent = "Firmen werden geladen â€¦";
     status.className = "status pending";
   }
-  console.info("Lade Firmen aus Airtable â€¦");
+  console.info("Lade Firmen aus Airtable â€¦", {
+    base: process.env.AIRTABLE_BASE_COMPANIES,
+    table: process.env.AIRTABLE_TABLE_COMPANIES,
+    view: process.env.AIRTABLE_VIEW_COMPANIES,
+  });
   try {
     companyOptions = await airtableClient.fetchCompanies();
     datalist.innerHTML = "";
