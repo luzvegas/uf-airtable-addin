@@ -716,12 +716,14 @@ async function handleCreatePersonFromSender() {
       } else {
         setStatus("person-status", "Person existiert bereits – keine neuen Daten.", "success");
       }
+      togglePersonForm(false);
       return;
     }
 
     await airtableClient.createPerson(payload);
     setStatus("person-status", "Person wurde in Airtable angelegt. Aktualisiere Liste ...", "success");
     await loadExternalPersons();
+    togglePersonForm(false);
   } catch (error) {
     console.error(error);
     setStatus("person-status", `Fehler beim Erstellen: ${(error as Error).message}`, "error");
@@ -756,6 +758,7 @@ async function handleCreateCompanyFromForm() {
       (await airtableClient.findCompanyByName(name));
     if (existing) {
       setStatus("company-status", `Firma existiert bereits: ${existing.name}`, "success");
+      toggleCompanyForm(false);
       return;
     }
 
@@ -787,6 +790,7 @@ async function handleCreateCompanyFromForm() {
     if (personCompanyInput) {
       personCompanyInput.value = name;
     }
+    toggleCompanyForm(false);
   } catch (error) {
     console.error(error);
     setStatus("company-status", `Fehler beim Erstellen: ${(error as Error).message}`, "error");
@@ -1386,23 +1390,27 @@ function extractPrimaryMessageBody(text: string): string {
   return text;
 }
 
-function togglePersonForm() {
+function togglePersonForm(forceCollapsed?: boolean) {
   const container = document.getElementById("person-form");
   const toggle = document.getElementById("person-toggle");
   if (!container || !toggle) {
     return;
   }
-  const isCollapsed = container.classList.toggle("collapsed");
+  const isCollapsed =
+    typeof forceCollapsed === "boolean" ? forceCollapsed : container.classList.toggle("collapsed");
+  container.classList.toggle("collapsed", isCollapsed);
   toggle.textContent = isCollapsed ? "Person erfassen" : "Person ausblenden";
 }
 
-function toggleCompanyForm() {
+function toggleCompanyForm(forceCollapsed?: boolean) {
   const container = document.getElementById("company-form");
   const toggle = document.getElementById("company-toggle");
   if (!container || !toggle) {
     return;
   }
-  const isCollapsed = container.classList.toggle("collapsed");
+  const isCollapsed =
+    typeof forceCollapsed === "boolean" ? forceCollapsed : container.classList.toggle("collapsed");
+  container.classList.toggle("collapsed", isCollapsed);
   toggle.textContent = isCollapsed ? "Firma erfassen" : "Firma ausblenden";
 }
 
