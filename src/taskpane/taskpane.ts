@@ -43,6 +43,7 @@ let personRoleOptions: string[] = [];
 let senderEmail: string | undefined;
 let cachedGraphToken: string | null = null;
 let notePersonTokens: string[] = [];
+let companyCategoryTokens: string[] = [];
 let msalInstance: any | null = null;
 const linkTitleCache: Record<string, string> = {};
 
@@ -133,6 +134,18 @@ function wireUpForms() {
     documentSource.addEventListener("change", toggleDocumentSource);
   }
   toggleDocumentSource();
+
+  const categoryInput = document.getElementById("company-category") as HTMLInputElement | null;
+  if (categoryInput) {
+    const commitCategoryInput = () => addCompanyCategoryToken(categoryInput.value);
+    categoryInput.addEventListener("change", commitCategoryInput);
+    categoryInput.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter" || ev.key === "," || ev.key === ";") {
+        ev.preventDefault();
+        commitCategoryInput();
+      }
+    });
+  }
 }
 
 function setupTabs() {
@@ -725,7 +738,7 @@ async function handleCreateCompanyFromForm() {
     const cityInput = document.getElementById("company-city") as HTMLInputElement | null;
     const countryInput = document.getElementById("company-country") as HTMLSelectElement | null;
     const languageInput = document.getElementById("company-language") as HTMLSelectElement | null;
-    const categoryInput = document.getElementById("company-category") as HTMLSelectElement | null;
+    const categoryInput = document.getElementById("company-category") as HTMLInputElement | null;
     const personCompanyInput = document.getElementById("person-company-input") as HTMLInputElement | null;
 
     const fallbackName = personCompanyInput?.value?.trim() || "";
@@ -744,9 +757,10 @@ async function handleCreateCompanyFromForm() {
     }
 
     const zipValue = zipInput?.value ? Number(zipInput.value) : undefined;
-    const categories = categoryInput
-      ? Array.from(categoryInput.selectedOptions).map((opt) => opt.value).filter(Boolean)
-      : [];
+    if (categoryInput?.value?.trim()) {
+      addCompanyCategoryToken(categoryInput.value);
+    }
+    const categories = companyCategoryTokens.slice();
 
     const payload: AirtableCompanyPayload = {
       name,
@@ -764,10 +778,50 @@ async function handleCreateCompanyFromForm() {
 
     await airtableClient.createCompany(payload);
     setStatus("company-status", "Firma wurde in Airtable angelegt.", "success");
+    companyCategoryTokens = [];
+    renderCompanyCategoryTokens();
   } catch (error) {
     console.error(error);
     setStatus("company-status", `Fehler beim Erstellen: ${(error as Error).message}`, "error");
   }
+}
+
+function addCompanyCategoryToken(raw: string) {
+  const tokens = raw
+    .split(/[;,\n]+/)
+    .map((t) => t.trim())
+    .filter(Boolean);
+  if (!tokens.length) {
+    return;
+  }
+  tokens.forEach((token) => {
+    const exists = companyCategoryTokens.some((t) => t.toLowerCase() === token.toLowerCase());
+    if (!exists) {
+      companyCategoryTokens.push(token);
+    }
+  });
+  const input = document.getElementById("company-category") as HTMLInputElement | null;
+  if (input) {
+    input.value = "";
+  }
+  renderCompanyCategoryTokens();
+}
+
+function renderCompanyCategoryTokens() {
+  const container = document.getElementById("company-category-selected");
+  if (!container) {
+    return;
+  }
+  container.innerHTML = "";
+  if (!companyCategoryTokens.length) {
+    return;
+  }
+  companyCategoryTokens.forEach((token) => {
+    const pill = document.createElement("span");
+    pill.className = "token-pill";
+    pill.textContent = token;
+    container.appendChild(pill);
+  });
 }
 
 async function updateExistingPerson(

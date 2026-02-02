@@ -47,8 +47,8 @@
                 <dd id="mail-date">-</dd>
             </dl>
             <div class="toggle-row">
-                <button id="person-toggle" type="button" class="primary small centered">Person erfassen</button>
-                <button id="company-toggle" type="button" class="primary small centered">Firma erfassen</button>
+                <button id="person-toggle" type="button" class="primary small">Person erfassen</button>
+                <button id="company-toggle" type="button" class="primary small">Firma erfassen</button>
             </div>
             <div class="person-form collapsed" id="person-form">
                 <label>Name
@@ -125,17 +125,19 @@
                     </select>
                 </label>
                 <label>Kategorie (mehrere mÃ¶glich)
-                    <select id="company-category" multiple>
-                        <option value="Kunde">Kunde</option>
-                        <option value="Supplier">Supplier</option>
-                        <option value="DIT">DIT</option>
-                        <option value="VFX">VFX</option>
-                        <option value="IT">IT</option>
-                        <option value="Unterhalt/Bau">Unterhalt/Bau</option>
-                        <option value="Reinigung">Reinigung</option>
-                        <option value="Quality Control">Quality Control</option>
-                    </select>
-                    <span class="input-hint">Mehrere Kategorien auswÃ¤hlen (Strg/Cmd oder Shift).</span>
+                    <input list="company-category-datalist" id="company-category" type="text" placeholder="Kategorie suchen oder eingeben" />
+                    <datalist id="company-category-datalist">
+                        <option value="Kunde"></option>
+                        <option value="Supplier"></option>
+                        <option value="DIT"></option>
+                        <option value="VFX"></option>
+                        <option value="IT"></option>
+                        <option value="Unterhalt/Bau"></option>
+                        <option value="Reinigung"></option>
+                        <option value="Quality Control"></option>
+                    </datalist>
+                    <div id="company-category-selected" class="token-list"></div>
+                    <span class="input-hint">Mehrere Kategorien mit Enter/Komma/Semikolon bestÃ¤tigen.</span>
                 </label>
                 <div class="mail-actions">
                     <button id="create-company-btn" type="button" class="primary">Firma anlegen</button>
