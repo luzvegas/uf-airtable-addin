@@ -665,7 +665,7 @@ async function handleCreatePersonFromSender() {
       }
     }
 
-    const signatureInfo = extractSignatureInfo(messageBodyText);
+    const signatureInfo = extractSignatureInfo(extractPrimaryMessageBody(messageBodyText));
     const payload: AirtablePersonPayload = {
       name,
       email: email || undefined,
@@ -826,8 +826,8 @@ function prefillPersonDefaults(item: Office.MessageRead) {
   const phoneInput = document.getElementById("person-phone") as HTMLInputElement | null;
   const displayName = item.from?.displayName?.trim() || "";
   const email = item.from?.emailAddress?.trim() || senderEmail || "";
-  const signatureName = extractSignatureName(messageBodyText);
-  const signatureInfo = extractSignatureInfo(messageBodyText);
+  const signatureName = extractSignatureName(extractPrimaryMessageBody(messageBodyText));
+  const signatureInfo = extractSignatureInfo(extractPrimaryMessageBody(messageBodyText));
   if (nameInput && !nameInput.value) {
     nameInput.value = displayName || signatureName || (email ? email.split("@")[0] : "");
   }
@@ -1113,6 +1113,32 @@ function limitBodyText(text: string, maxLength = 12000): string {
 function normalizeBodyText(text: string): string {
   if (!text) return "";
   return text.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+function extractPrimaryMessageBody(text: string): string {
+  if (!text) {
+    return "";
+  }
+  const separators = [
+    /^Am\s.+schrieb.+:$/i,
+    /^On\s.+wrote:$/i,
+    /^From:\s.+$/i,
+    /^Von:\s.+$/i,
+    /^Sent:\s.+$/i,
+    /^Gesendet:\s.+$/i,
+    /^-----Original Message-----$/i,
+  ];
+  const lines = text.split(/\r?\n/);
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) {
+      continue;
+    }
+    if (separators.some((pattern) => pattern.test(line))) {
+      return lines.slice(0, i).join("\n").trim();
+    }
+  }
+  return text;
 }
 
 function togglePersonForm() {
