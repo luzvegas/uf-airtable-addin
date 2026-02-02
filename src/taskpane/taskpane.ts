@@ -40,6 +40,7 @@ let collaboratorOptions: CollaboratorOption[] = [];
 let externalOptions: AirtableProjectOption[] = [];
 let companyOptions: AirtableCompanyOption[] = [];
 let personRoleOptions: string[] = [];
+let companyCategoryOptions: string[] = [];
 let senderEmail: string | undefined;
 let cachedGraphToken: string | null = null;
 let notePersonTokens: string[] = [];
@@ -71,6 +72,7 @@ async function initializePane() {
     loadExternalPersons(),
     loadCompanies(),
     loadPersonRoles(),
+    loadCompanyCategories(),
   ]);
 }
 
@@ -514,6 +516,28 @@ async function loadPersonRoles() {
   }
 }
 
+async function loadCompanyCategories() {
+  const datalist = document.getElementById("company-category-datalist") as HTMLDataListElement | null;
+  if (!datalist) {
+    return;
+  }
+  try {
+    companyCategoryOptions = await airtableClient.fetchCompanyCategories();
+    datalist.innerHTML = "";
+    const list = companyCategoryOptions.length
+      ? companyCategoryOptions
+      : ["Kunde", "Supplier", "DIT", "VFX", "IT", "Unterhalt/Bau", "Reinigung", "Quality Control"];
+    list.forEach((category) => {
+      const option = document.createElement("option");
+      option.value = category;
+      datalist.appendChild(option);
+    });
+  } catch (error) {
+    console.error("Firmkategorien konnten nicht geladen werden:", error);
+    companyCategoryOptions = [];
+  }
+}
+
 function filterLink(url: string, count: number): boolean {
   const lower = url.toLowerCase();
   if (lower.includes("safelinks.protection.outlook.com")) return false;
@@ -716,14 +740,15 @@ async function handleCreatePersonFromSender() {
       } else {
         setStatus("person-status", "Person existiert bereits – keine neuen Daten.", "success");
       }
-      togglePersonForm(false);
+      togglePersonForm(true);
       return;
     }
 
     await airtableClient.createPerson(payload);
     setStatus("person-status", "Person wurde in Airtable angelegt. Aktualisiere Liste ...", "success");
     await loadExternalPersons();
-    togglePersonForm(false);
+    setStatus("person-status", "Person wurde in Airtable angelegt.", "success");
+    togglePersonForm(true);
   } catch (error) {
     console.error(error);
     setStatus("person-status", `Fehler beim Erstellen: ${(error as Error).message}`, "error");
@@ -758,7 +783,7 @@ async function handleCreateCompanyFromForm() {
       (await airtableClient.findCompanyByName(name));
     if (existing) {
       setStatus("company-status", `Firma existiert bereits: ${existing.name}`, "success");
-      toggleCompanyForm(false);
+      toggleCompanyForm(true);
       return;
     }
 
@@ -790,7 +815,8 @@ async function handleCreateCompanyFromForm() {
     if (personCompanyInput) {
       personCompanyInput.value = name;
     }
-    toggleCompanyForm(false);
+    setStatus("company-status", "Firma wurde in Airtable angelegt.", "success");
+    toggleCompanyForm(true);
   } catch (error) {
     console.error(error);
     setStatus("company-status", `Fehler beim Erstellen: ${(error as Error).message}`, "error");
@@ -853,7 +879,14 @@ async function refreshLookupData(force = false) {
     return;
   }
   lastLookupRefreshAt = now;
-  await Promise.all([loadProjects(), loadCompanies(), loadPersonRoles(), loadExternalPersons(), loadCollaborators()]);
+  await Promise.all([
+    loadProjects(),
+    loadCompanies(),
+    loadPersonRoles(),
+    loadCompanyCategories(),
+    loadExternalPersons(),
+    loadCollaborators(),
+  ]);
 }
 
 function removeCompanyCategoryToken(token: string) {
