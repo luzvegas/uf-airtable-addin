@@ -46,7 +46,10 @@
                 <dt>Eingang</dt>
                 <dd id="mail-date">-</dd>
             </dl>
-            <button id="person-toggle" type="button" class="primary small centered">Personendetails anzeigen</button>
+            <div class="toggle-row">
+                <button id="person-toggle" type="button" class="primary small centered">Person erfassen</button>
+                <button id="company-toggle" type="button" class="primary small centered">Firma erfassen</button>
+            </div>
             <div class="person-form collapsed" id="person-form">
                 <label>Name
                     <input id="person-name" type="text" placeholder="Name der Person" />
@@ -79,7 +82,6 @@
                     <p id="person-status" class="status"></p>
                 </div>
             </div>
-            <button id="company-toggle" type="button" class="primary small centered">Firma erfassen</button>
             <div class="company-form collapsed" id="company-form">
                 <label>Firmenname
                     <input id="company-name" type="text" placeholder="Firmenname" required />
@@ -123,8 +125,17 @@
                     </select>
                 </label>
                 <label>Kategorie (mehrere mÃ¶glich)
-                    <input id="company-category" type="text" placeholder="z.B. Kunde, VFX" />
-                    <span class="input-hint">Mehrere Kategorien mit Komma trennen.</span>
+                    <select id="company-category" multiple>
+                        <option value="Kunde">Kunde</option>
+                        <option value="Supplier">Supplier</option>
+                        <option value="DIT">DIT</option>
+                        <option value="VFX">VFX</option>
+                        <option value="IT">IT</option>
+                        <option value="Unterhalt/Bau">Unterhalt/Bau</option>
+                        <option value="Reinigung">Reinigung</option>
+                        <option value="Quality Control">Quality Control</option>
+                    </select>
+                    <span class="input-hint">Mehrere Kategorien auswÃ¤hlen (Strg/Cmd oder Shift).</span>
                 </label>
                 <div class="mail-actions">
                     <button id="create-company-btn" type="button" class="primary">Firma anlegen</button>

@@ -725,7 +725,7 @@ async function handleCreateCompanyFromForm() {
     const cityInput = document.getElementById("company-city") as HTMLInputElement | null;
     const countryInput = document.getElementById("company-country") as HTMLSelectElement | null;
     const languageInput = document.getElementById("company-language") as HTMLSelectElement | null;
-    const categoryInput = document.getElementById("company-category") as HTMLInputElement | null;
+    const categoryInput = document.getElementById("company-category") as HTMLSelectElement | null;
     const personCompanyInput = document.getElementById("person-company-input") as HTMLInputElement | null;
 
     const fallbackName = personCompanyInput?.value?.trim() || "";
@@ -744,11 +744,8 @@ async function handleCreateCompanyFromForm() {
     }
 
     const zipValue = zipInput?.value ? Number(zipInput.value) : undefined;
-    const categories = categoryInput?.value
-      ? categoryInput.value
-          .split(/[,;\n]/)
-          .map((entry) => entry.trim())
-          .filter(Boolean)
+    const categories = categoryInput
+      ? Array.from(categoryInput.selectedOptions).map((opt) => opt.value).filter(Boolean)
       : [];
 
     const payload: AirtableCompanyPayload = {
@@ -1309,7 +1306,7 @@ function togglePersonForm() {
     return;
   }
   const isCollapsed = container.classList.toggle("collapsed");
-  toggle.textContent = isCollapsed ? "Personendetails anzeigen" : "Personendetails ausblenden";
+  toggle.textContent = isCollapsed ? "Person erfassen" : "Person ausblenden";
 }
 
 function toggleCompanyForm() {
