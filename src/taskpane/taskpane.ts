@@ -663,6 +663,12 @@ async function handleCreatePersonFromSender() {
         setStatus("person-status", `Person existiert bereits: ${existing.name}`, "success");
         return;
       }
+    } else if (companyRecordIds.length && name) {
+      const existing = await airtableClient.findPersonByNameAndCompany(name, companyRecordIds[0]);
+      if (existing) {
+        setStatus("person-status", `Person existiert bereits: ${existing.name}`, "success");
+        return;
+      }
     }
 
     const signatureInfo = extractSignatureInfo(extractPrimaryMessageBody(messageBodyText));

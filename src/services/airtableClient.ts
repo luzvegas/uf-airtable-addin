@@ -261,6 +261,29 @@ export class AirtableClient {
     };
   }
 
+  async findPersonByNameAndCompany(name: string, companyRecordId: string): Promise<AirtableProjectOption | null> {
+    if (!name || !companyRecordId) {
+      return null;
+    }
+    const baseId = this.config.baseIds.persons || this.config.baseIds.tasks;
+    const tableName = this.config.tableNames.persons;
+    const safeName = escapeAirtableFormulaValue(name);
+    const formula = `AND({Name}='${safeName}',FIND('${companyRecordId}',ARRAYJOIN({Firmen})))`;
+    const records = await this.listRecords<Record<string, unknown>>(baseId, tableName, {
+      filterByFormula: formula,
+      fields: ["Name", "E-Mail"],
+    });
+    if (!records.length) {
+      return null;
+    }
+    const record = records[0];
+    return {
+      id: record.id,
+      name: pickProjectName(record.fields) ?? record.id,
+      email: pickEmail(record.fields),
+    };
+  }
+
   async fetchProjects(): Promise<AirtableProjectOption[]> {
     const baseId = this.config.baseIds.projects || this.config.baseIds.tasks;
     const tableName = this.config.tableNames.projects;
