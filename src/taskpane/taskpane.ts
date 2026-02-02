@@ -46,6 +46,7 @@ let notePersonTokens: string[] = [];
 let companyCategoryTokens: string[] = [];
 let msalInstance: any | null = null;
 const linkTitleCache: Record<string, string> = {};
+let lastLookupRefreshAt = 0;
 
 function getEligibleAttachments(): OutlookAttachmentPreview[] {
   return attachments.filter((att) => !att.isInline);
@@ -155,6 +156,7 @@ function setupTabs() {
   const activate = (targetId: string) => {
     buttons.forEach((btn) => btn.classList.toggle("active", btn.dataset.tabTarget === targetId));
     panels.forEach((panel) => panel.classList.toggle("active", panel.id === targetId));
+    refreshLookupData();
   };
 
   buttons.forEach((btn) => {
@@ -718,7 +720,8 @@ async function handleCreatePersonFromSender() {
     }
 
     await airtableClient.createPerson(payload);
-    setStatus("person-status", "Person wurde in Airtable angelegt.", "success");
+    setStatus("person-status", "Person wurde in Airtable angelegt. Aktualisiere Liste ...", "success");
+    await loadExternalPersons();
   } catch (error) {
     console.error(error);
     setStatus("person-status", `Fehler beim Erstellen: ${(error as Error).message}`, "error");
@@ -838,6 +841,15 @@ function renderCompanyCategoryTokens() {
     pill.appendChild(removeBtn);
     container.appendChild(pill);
   });
+}
+
+async function refreshLookupData(force = false) {
+  const now = Date.now();
+  if (!force && now - lastLookupRefreshAt < 30000) {
+    return;
+  }
+  lastLookupRefreshAt = now;
+  await Promise.all([loadProjects(), loadCompanies(), loadPersonRoles(), loadExternalPersons(), loadCollaborators()]);
 }
 
 function removeCompanyCategoryToken(token: string) {
