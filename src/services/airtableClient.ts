@@ -72,7 +72,12 @@ export class AirtableClient {
   private async listRecords<TFields = Record<string, unknown>>(
     baseId: string,
     tableName: string,
-    options?: { fields?: string[]; filterByFormula?: string; sort?: Array<{ field: string; direction?: "asc" | "desc" }> }
+    options?: {
+      fields?: string[];
+      filterByFormula?: string;
+      sort?: Array<{ field: string; direction?: "asc" | "desc" }>;
+      view?: string;
+    }
   ): Promise<Array<{ id: string; fields: TFields }>> {
     if (!this.hasValidToken()) {
       console.warn(
@@ -93,6 +98,9 @@ export class AirtableClient {
         for (const field of options.fields) {
           params.append("fields[]", field);
         }
+      }
+      if (options?.view) {
+        params.append("view", options.view);
       }
       if (options?.filterByFormula) {
         params.append("filterByFormula", options.filterByFormula);
@@ -329,10 +337,13 @@ export class AirtableClient {
   async fetchCompanies(): Promise<AirtableCompanyOption[]> {
     const baseId = this.config.baseIds.companies || this.config.baseIds.tasks;
     const tableName = this.config.tableNames.companies;
+    const viewName = (process.env.AIRTABLE_VIEW_COMPANIES || "").trim();
     if (!baseId || baseId.startsWith("AIRTABLE_BASE_ID")) {
       return [];
     }
-    const records = await this.listRecords<Record<string, unknown>>(baseId, tableName);
+    const records = await this.listRecords<Record<string, unknown>>(baseId, tableName, {
+      view: viewName || undefined,
+    });
     return records.map((record) => ({
       id: record.id,
       name: pickCompanyName(record.fields) ?? record.id,

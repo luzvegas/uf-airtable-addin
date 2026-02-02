@@ -15,6 +15,7 @@ declare const process: {
     AIRTABLE_TABLE_PERSONS?: string;
     AIRTABLE_TABLE_NOTES?: string;
     AIRTABLE_TABLE_COMPANIES?: string;
+    AIRTABLE_VIEW_COMPANIES?: string;
     NODE_ENV?: string;
     [key: string]: string | undefined;
   };
