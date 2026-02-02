@@ -138,6 +138,65 @@ export class AirtableClient {
     return collected;
   }
 
+  private async getRecord<TFields = Record<string, unknown>>(
+    baseId: string,
+    tableName: string,
+    recordId: string,
+    fields?: string[]
+  ): Promise<{ id: string; fields: TFields } | null> {
+    if (!this.hasValidToken()) {
+      console.warn(
+        "Airtable token not configured. Please provide AIRTABLE_* values in a local .env file or inject secrets at runtime."
+      );
+      return null;
+    }
+
+    const params = new URLSearchParams();
+    if (fields?.length) {
+      fields.forEach((field) => params.append("fields[]", field));
+    }
+    const query = params.toString();
+    const url = `${this.getBaseUrl()}/${baseId}/${buildTablePath(tableName)}/${recordId}${query ? `?${query}` : ""}`;
+    const response = await fetch(url, {
+      method: "GET",
+      headers: this.config.proxyUrl ? undefined : { Authorization: `Bearer ${this.config.personalAccessToken}` },
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`Airtable record error ${response.status}: ${errorBody}`);
+    }
+
+    return (await response.json()) as { id: string; fields: TFields };
+  }
+
+  private async updateRecord(
+    baseId: string,
+    tableName: string,
+    recordId: string,
+    fields: Record<string, unknown>
+  ): Promise<AirtableRecordResponse | null> {
+    if (!this.hasValidToken()) {
+      console.warn(
+        "Airtable token not configured. Please provide AIRTABLE_* values in a local .env file or inject secrets at runtime."
+      );
+      return null;
+    }
+
+    const response = await fetch(`${this.getBaseUrl()}/${baseId}/${buildTablePath(tableName)}/${recordId}`, {
+      method: "PATCH",
+      headers: this.buildHeaders(),
+      body: JSON.stringify({ fields }),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`Airtable error ${response.status}: ${errorBody}`);
+    }
+
+    return (await response.json()) as AirtableRecordResponse;
+  }
+
   async createTask(payload: AirtableTaskPayload) {
     // Use field IDs to avoid umlaut/label issues.
     const fields: Record<string, unknown> = {
@@ -217,26 +276,37 @@ export class AirtableClient {
   }
 
   async createPerson(payload: AirtablePersonPayload) {
-    const fields: Record<string, unknown> = {
-      fldc59tueuvg2S88t: payload.name, // Name
-      ...(payload.email ? { fldjknUa9bexE7aQz: payload.email } : {}), // E-Mail
-      ...(payload.phoneMobile ? { fldxsKlAJbHLXHsBo: payload.phoneMobile } : {}), // Telefon (Mobil)
-      ...(payload.phone ? { fldJx1OuZVhFJdYys: payload.phone } : {}), // Telefon
-      ...(payload.position ? { fldRblZvAWInAf3ZA: payload.position } : {}), // Position
-    };
+    const fields = buildPersonFields(payload);
+    return this.createRecord(
+      this.config.baseIds.persons || this.config.baseIds.tasks,
+      this.config.tableNames.persons,
+      fields
+    );
+  }
 
-    if (payload.roleValues?.length) {
-      fields.fldhH6gkiXJ8r5E4C = payload.roleValues; // Rolle (multiple select)
+  async updatePerson(recordId: string, payload: Partial<AirtablePersonPayload>) {
+    const fields = buildPersonFields(payload);
+    if (!recordId || !Object.keys(fields).length) {
+      return null;
     }
+    return this.updateRecord(
+      this.config.baseIds.persons || this.config.baseIds.tasks,
+      this.config.tableNames.persons,
+      recordId,
+      fields
+    );
+  }
 
-    if (payload.companyRecordIds?.length) {
-      const valid = payload.companyRecordIds.filter((id) => id.startsWith("rec"));
-      if (valid.length) {
-        fields.fldKg2TWXArwWDuPj = valid; // Firmen (linked record IDs)
-      }
+  async getPersonRecord(recordId: string) {
+    if (!recordId) {
+      return null;
     }
-
-    return this.createRecord(this.config.baseIds.persons || this.config.baseIds.tasks, this.config.tableNames.persons, fields);
+    return this.getRecord<Record<string, unknown>>(
+      this.config.baseIds.persons || this.config.baseIds.tasks,
+      this.config.tableNames.persons,
+      recordId,
+      ["Name", "E-Mail", "Telefon (Mobil)", "Telefon", "Position", "Rolle", "Firmen"]
+    );
   }
 
   async findPersonByEmail(email: string): Promise<AirtableProjectOption | null> {
@@ -499,3 +569,32 @@ function escapeAirtableFormulaValue(value: string): string {
 }
 
 export const airtableClient = new AirtableClient();
+
+function buildPersonFields(payload: Partial<AirtablePersonPayload>): Record<string, unknown> {
+  const fields: Record<string, unknown> = {};
+  if (payload.name) {
+    fields.fldc59tueuvg2S88t = payload.name; // Name
+  }
+  if (payload.email) {
+    fields.fldjknUa9bexE7aQz = payload.email; // E-Mail
+  }
+  if (payload.phoneMobile) {
+    fields.fldxsKlAJbHLXHsBo = payload.phoneMobile; // Telefon (Mobil)
+  }
+  if (payload.phone) {
+    fields.fldJx1OuZVhFJdYys = payload.phone; // Telefon
+  }
+  if (payload.position) {
+    fields.fldRblZvAWInAf3ZA = payload.position; // Position
+  }
+  if (payload.roleValues?.length) {
+    fields.fldhH6gkiXJ8r5E4C = payload.roleValues; // Rolle (multiple select)
+  }
+  if (payload.companyRecordIds?.length) {
+    const valid = payload.companyRecordIds.filter((id) => id.startsWith("rec"));
+    if (valid.length) {
+      fields.fldKg2TWXArwWDuPj = valid; // Firmen (linked record IDs)
+    }
+  }
+  return fields;
+}

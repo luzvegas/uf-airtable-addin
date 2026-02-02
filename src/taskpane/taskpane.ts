@@ -657,20 +657,6 @@ async function handleCreatePersonFromSender() {
       return;
     }
 
-    if (email) {
-      const existing = await airtableClient.findPersonByEmail(email);
-      if (existing) {
-        setStatus("person-status", `Person existiert bereits: ${existing.name}`, "success");
-        return;
-      }
-    } else if (companyRecordIds.length && name) {
-      const existing = await airtableClient.findPersonByNameAndCompany(name, companyRecordIds[0]);
-      if (existing) {
-        setStatus("person-status", `Person existiert bereits: ${existing.name}`, "success");
-        return;
-      }
-    }
-
     const signatureInfo = extractSignatureInfo(extractPrimaryMessageBody(messageBodyText));
     const payload: AirtablePersonPayload = {
       name,
@@ -682,12 +668,99 @@ async function handleCreatePersonFromSender() {
       companyRecordIds: companyRecordIds.length ? companyRecordIds : undefined,
     };
 
+    let existingId = "";
+    if (email) {
+      const existing = await airtableClient.findPersonByEmail(email);
+      if (existing) {
+        existingId = existing.id;
+      }
+    } else if (companyRecordIds.length && name) {
+      const existing = await airtableClient.findPersonByNameAndCompany(name, companyRecordIds[0]);
+      if (existing) {
+        existingId = existing.id;
+      }
+    }
+
+    if (existingId) {
+      const updated = await updateExistingPerson(existingId, payload);
+      if (updated) {
+        setStatus("person-status", "Vorhandene Person wurde aktualisiert.", "success");
+      } else {
+        setStatus("person-status", "Person existiert bereits – keine neuen Daten.", "success");
+      }
+      return;
+    }
+
     await airtableClient.createPerson(payload);
     setStatus("person-status", "Person wurde in Airtable angelegt.", "success");
   } catch (error) {
     console.error(error);
     setStatus("person-status", `Fehler beim Erstellen: ${(error as Error).message}`, "error");
   }
+}
+
+async function updateExistingPerson(recordId: string, payload: AirtablePersonPayload): Promise<boolean> {
+  const existingRecord = await airtableClient.getPersonRecord(recordId);
+  if (!existingRecord) {
+    return false;
+  }
+  const fields = existingRecord.fields as Record<string, unknown>;
+  const existingName = typeof fields.Name === "string" ? fields.Name.trim() : "";
+  const existingEmail = typeof fields["E-Mail"] === "string" ? fields["E-Mail"].trim() : "";
+  const existingMobile = typeof fields["Telefon (Mobil)"] === "string" ? fields["Telefon (Mobil)"].trim() : "";
+  const existingPhone = typeof fields.Telefon === "string" ? fields.Telefon.trim() : "";
+  const existingPosition = typeof fields.Position === "string" ? fields.Position.trim() : "";
+  const existingRoles = Array.isArray(fields.Rolle) ? (fields.Rolle as string[]) : [];
+  const existingCompanies = Array.isArray(fields.Firmen) ? (fields.Firmen as string[]) : [];
+
+  const updates: Partial<AirtablePersonPayload> = {};
+  if (!existingName && payload.name) {
+    updates.name = payload.name;
+  }
+  if (!existingEmail && payload.email) {
+    updates.email = payload.email;
+  }
+  if (!existingMobile && payload.phoneMobile) {
+    updates.phoneMobile = payload.phoneMobile;
+  }
+  if (!existingPhone && payload.phone) {
+    updates.phone = payload.phone;
+  }
+  if (!existingPosition && payload.position) {
+    updates.position = payload.position;
+  }
+
+  const mergedRoles = mergeUnique(existingRoles, payload.roleValues ?? []);
+  if (mergedRoles.changed) {
+    updates.roleValues = mergedRoles.values;
+  }
+
+  const mergedCompanies = mergeUnique(existingCompanies, payload.companyRecordIds ?? []);
+  if (mergedCompanies.changed) {
+    updates.companyRecordIds = mergedCompanies.values;
+  }
+
+  if (!Object.keys(updates).length) {
+    return false;
+  }
+
+  await airtableClient.updatePerson(recordId, updates);
+  return true;
+}
+
+function mergeUnique(existing: string[], incoming: string[]): { values: string[]; changed: boolean } {
+  if (!incoming.length) {
+    return { values: existing, changed: false };
+  }
+  const set = new Set(existing);
+  let changed = false;
+  incoming.forEach((value) => {
+    if (value && !set.has(value)) {
+      set.add(value);
+      changed = true;
+    }
+  });
+  return { values: Array.from(set), changed };
 }
 
 async function executeWithStatus(
