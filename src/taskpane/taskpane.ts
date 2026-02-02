@@ -1123,6 +1123,7 @@ function extractPrimaryMessageBody(text: string): string {
     /^Am\s.+schrieb.+:$/i,
     /^Le\s.+a écrit\s*:$/i,
     /^On\s.+wrote:$/i,
+    /^On\s.+,\s+at\s.+,\s+.+wrote:$/i,
     /^From:\s.+$/i,
     /^Von:\s.+$/i,
     /^Sent:\s.+$/i,
