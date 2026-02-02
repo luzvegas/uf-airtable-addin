@@ -819,9 +819,26 @@ function renderCompanyCategoryTokens() {
   companyCategoryTokens.forEach((token) => {
     const pill = document.createElement("span");
     pill.className = "token-pill";
-    pill.textContent = token;
+
+    const label = document.createElement("span");
+    label.textContent = token;
+
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "token-remove";
+    removeBtn.setAttribute("aria-label", `${token} entfernen`);
+    removeBtn.textContent = "×";
+    removeBtn.addEventListener("click", () => removeCompanyCategoryToken(token));
+
+    pill.appendChild(label);
+    pill.appendChild(removeBtn);
     container.appendChild(pill);
   });
+}
+
+function removeCompanyCategoryToken(token: string) {
+  companyCategoryTokens = companyCategoryTokens.filter((t) => t.toLowerCase() !== token.toLowerCase());
+  renderCompanyCategoryTokens();
 }
 
 async function updateExistingPerson(

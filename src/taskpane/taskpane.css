@@ -334,11 +334,28 @@ textarea {
 }
 
 .token-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: #f0f4ff;
   border-radius: 12px;
   padding: 4px 8px;
   font-size: 12px;
   border: 1px solid #d7e3ff;
+}
+
+.token-remove {
+  border: none;
+  background: transparent;
+  color: #5c5c5c;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+}
+
+.token-remove:hover {
+  color: #a80000;
 }
 
 .doc-text {
