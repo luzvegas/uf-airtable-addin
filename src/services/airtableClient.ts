@@ -584,9 +584,6 @@ function buildPersonFields(payload: Partial<AirtablePersonPayload>): Record<stri
   if (payload.phone) {
     fields.fldJx1OuZVhFJdYys = payload.phone; // Telefon
   }
-  if (payload.position) {
-    fields.fldRblZvAWInAf3ZA = payload.position; // Position
-  }
   if (payload.roleValues?.length) {
     fields.fldhH6gkiXJ8r5E4C = payload.roleValues; // Rolle (multiple select)
   }

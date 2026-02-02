@@ -635,7 +635,6 @@ async function handleCreatePersonFromSender() {
     const emailInput = document.getElementById("person-email") as HTMLInputElement | null;
     const nameInput = document.getElementById("person-name") as HTMLInputElement | null;
     const roleInput = document.getElementById("person-role-input") as HTMLInputElement | null;
-    const positionInput = document.getElementById("person-position") as HTMLInputElement | null;
     const mobileInput = document.getElementById("person-phone-mobile") as HTMLInputElement | null;
     const phoneInput = document.getElementById("person-phone") as HTMLInputElement | null;
     const companyInput = document.getElementById("person-company-input") as HTMLInputElement | null;
@@ -649,7 +648,6 @@ async function handleCreatePersonFromSender() {
           .filter(Boolean)
       : [];
     const roleValues = normalizeRoleValues(roles);
-    const position = positionInput?.value?.trim() || "";
     const companyRecordIds = resolveCompanyRecordIds(companyInput?.value || "");
 
     if (!roleValues.length) {
@@ -664,7 +662,6 @@ async function handleCreatePersonFromSender() {
       phoneMobile: mobileInput?.value?.trim() || signatureInfo.mobile || undefined,
       phone: phoneInput?.value?.trim() || signatureInfo.phone || undefined,
       roleValues: roleValues.length ? roleValues : undefined,
-      position: position || undefined,
       companyRecordIds: companyRecordIds.length ? companyRecordIds : undefined,
     };
 
@@ -717,7 +714,6 @@ async function updateExistingPerson(
   const existingEmail = typeof fields["E-Mail"] === "string" ? fields["E-Mail"].trim() : "";
   const existingMobile = typeof fields["Telefon (Mobil)"] === "string" ? fields["Telefon (Mobil)"].trim() : "";
   const existingPhone = typeof fields.Telefon === "string" ? fields.Telefon.trim() : "";
-  const existingPosition = typeof fields.Position === "string" ? fields.Position.trim() : "";
   const existingRoles = Array.isArray(fields.Rolle) ? (fields.Rolle as string[]) : [];
   const existingCompanies = Array.isArray(fields.Firmen) ? (fields.Firmen as string[]) : [];
 
@@ -738,10 +734,6 @@ async function updateExistingPerson(
   if (!existingPhone && payload.phone) {
     updates.phone = payload.phone;
     updatedFields.push("Telefon");
-  }
-  if (!existingPosition && payload.position) {
-    updates.position = payload.position;
-    updatedFields.push("Position");
   }
 
   const mergedRoles = mergeUnique(existingRoles, payload.roleValues ?? []);
