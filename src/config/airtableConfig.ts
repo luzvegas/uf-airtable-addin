@@ -15,6 +15,7 @@ export interface AirtableEnvironmentConfig {
     persons: string;
     notes: string;
     companies: string;
+    finance: string;
   };
   /**
    * Table names that will receive the records.
@@ -27,6 +28,7 @@ export interface AirtableEnvironmentConfig {
     persons: string;
     notes: string;
     companies: string;
+    finance: string;
   };
   /**
    * Optional proxy URL to avoid exposing PATs in the frontend (Azure Function).
@@ -47,6 +49,7 @@ const FALLBACK_BASES = {
   persons: "AIRTABLE_BASE_ID_TASKS",
   notes: "AIRTABLE_BASE_ID_TASKS",
   companies: "AIRTABLE_BASE_ID_TASKS",
+  finance: "AIRTABLE_BASE_ID_TASKS",
 };
 
 const FALLBACK_TABLES = {
@@ -57,6 +60,7 @@ const FALLBACK_TABLES = {
   persons: "Personen",
   notes: "Gesprächsnotizen",
   companies: "Firmen",
+  finance: "Finanzereignisse",
 };
 
 function readEnv(key: string): string | undefined {
@@ -84,6 +88,7 @@ export const defaultAirtableConfig: AirtableEnvironmentConfig = {
     persons: envOrFallback(readEnv("AIRTABLE_BASE_PERSONS"), FALLBACK_BASES.persons),
     notes: envOrFallback(readEnv("AIRTABLE_BASE_NOTES"), FALLBACK_BASES.notes),
     companies: envOrFallback(readEnv("AIRTABLE_BASE_COMPANIES"), FALLBACK_BASES.companies),
+    finance: envOrFallback(readEnv("AIRTABLE_BASE_FINANCE"), FALLBACK_BASES.finance),
   },
   tableNames: {
     tasks: envOrFallback(readEnv("AIRTABLE_TABLE_TASKS"), FALLBACK_TABLES.tasks),
@@ -93,6 +98,7 @@ export const defaultAirtableConfig: AirtableEnvironmentConfig = {
     persons: envOrFallback(readEnv("AIRTABLE_TABLE_PERSONS"), FALLBACK_TABLES.persons),
     notes: envOrFallback(readEnv("AIRTABLE_TABLE_NOTES"), FALLBACK_TABLES.notes),
     companies: envOrFallback(readEnv("AIRTABLE_TABLE_COMPANIES"), FALLBACK_TABLES.companies),
+    finance: envOrFallback(readEnv("AIRTABLE_TABLE_FINANCE"), FALLBACK_TABLES.finance),
   },
   proxyUrl: readEnv("AIRTABLE_PROXY_URL"),
 };

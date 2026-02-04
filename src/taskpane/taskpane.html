@@ -149,6 +149,7 @@
             <button class="tab-btn active" data-tab-target="tab-tasks">Tasks/Termine</button>
             <button class="tab-btn" data-tab-target="tab-docs">Dokumente/Links</button>
             <button class="tab-btn" data-tab-target="tab-notes">Gesprächsnotizen</button>
+            <button class="tab-btn" data-tab-target="tab-finance">Offerten</button>
         </div>
 
         <div class="tab-panel active" id="tab-tasks">
@@ -300,6 +301,42 @@
                     </label>
                     <button type="submit" class="primary">Notiz speichern</button>
                     <p id="note-status" class="status"></p>
+                </form>
+            </section>
+        </div>
+
+        <div class="tab-panel" id="tab-finance">
+            <section class="card">
+                <h2>Mail als Offerte speichern</h2>
+                <form id="finance-form" class="form-grid">
+                    <label>Projekt
+                        <input list="finance-project-datalist" id="finance-project-input" type="text" required />
+                        <datalist id="finance-project-datalist"></datalist>
+                    </label>
+                    <label>Status Offerte
+                        <select id="finance-offer-status">
+                            <option value="">Nicht gesetzt</option>
+                            <option value="Versendet">Versendet</option>
+                            <option value="Angenommen">Angenommen</option>
+                            <option value="Abgelehnt">Abgelehnt</option>
+                        </select>
+                    </label>
+                    <label>Vereinbarungskanal
+                        <select id="finance-channel">
+                            <option value="Mail" selected>Mail</option>
+                            <option value="PDF-Offerte">PDF-Offerte</option>
+                            <option value="Mündlich">Mündlich</option>
+                            <option value="Telefon">Telefon</option>
+                        </select>
+                    </label>
+                    <label>Betrag (CHF)
+                        <input id="finance-amount" type="number" step="0.01" min="0" required />
+                    </label>
+                    <label>Datum
+                        <input id="finance-date" type="datetime-local" required />
+                    </label>
+                    <button type="submit" class="primary">Offerte anlegen</button>
+                    <p id="finance-status" class="status"></p>
                 </form>
             </section>
         </div>

@@ -9,6 +9,7 @@ import { airtableClient } from "../services/airtableClient";
 import {
   AirtableAttachmentInput,
   AirtableDocumentPayload,
+  AirtableFinancePayload,
   AirtablePersonPayload,
   AirtableCompanyPayload,
   AirtableCompanyOption,
@@ -25,6 +26,7 @@ const projectInputs = [
   { inputId: "task-project-input", datalistId: "task-project-datalist" },
   { inputId: "document-project-input", datalistId: "document-project-datalist" },
   { inputId: "note-project-input", datalistId: "note-project-datalist" },
+  { inputId: "finance-project-input", datalistId: "finance-project-datalist" },
 ];
 const LINK_TITLE_PROXY = (process.env.TITLE_PROXY_URL || "").trim();
 const GRAPH_CLIENT_ID = (process.env.GRAPH_CLIENT_ID || "").trim();
@@ -51,6 +53,9 @@ let lastLookupRefreshAt = 0;
 let personNameCheckTimer: number | undefined;
 let personEmailCheckTimer: number | undefined;
 let companyNameCheckTimer: number | undefined;
+let personNameCheckSeq = 0;
+let personEmailCheckSeq = 0;
+let companyNameCheckSeq = 0;
 
 function getEligibleAttachments(): OutlookAttachmentPreview[] {
   return attachments.filter((att) => !att.isInline);
@@ -101,6 +106,11 @@ function wireUpForms() {
   const noteForm = document.getElementById("note-form");
   if (noteForm) {
     noteForm.addEventListener("submit", handleNoteSubmit);
+  }
+
+  const financeForm = document.getElementById("finance-form");
+  if (financeForm) {
+    financeForm.addEventListener("submit", handleFinanceSubmit);
   }
 
   const createPersonBtn = document.getElementById("create-person-btn");
@@ -693,6 +703,35 @@ async function handleNoteSubmit(event: Event) {
   await executeWithStatus("note-status", () => airtableClient.createNote(payload));
 }
 
+async function handleFinanceSubmit(event: Event) {
+  event.preventDefault();
+  if (!messageMetadata) {
+    return;
+  }
+
+  await executeWithStatus("finance-status", async () => {
+    const offerStatus = getInputValue("finance-offer-status") || undefined;
+    const channel = getInputValue("finance-channel") || "Mail";
+    const amountRaw = getInputValue("finance-amount");
+    const amount = amountRaw ? Number(amountRaw.replace(",", ".")) : undefined;
+    const dateIso = convertDateToIso(document.getElementById("finance-date") as HTMLInputElement, true);
+
+    const payload: AirtableFinancePayload = {
+      title: messageMetadata.subject,
+      projectRecordId: getProjectRecordId("finance"),
+      type: "Offerte",
+      date: dateIso,
+      amount: Number.isFinite(amount as number) ? (amount as number) : undefined,
+      description: truncateForAirtable(sanitizeForAirtableText(messageBodyText)),
+      offerStatus,
+      channel,
+      message: messageMetadata,
+    };
+
+    await airtableClient.createFinance(payload);
+  });
+}
+
 async function handleCreatePersonFromSender() {
   if (!messageMetadata) {
     return;
@@ -1123,6 +1162,7 @@ function prefillFormDefaults(metadata: OutlookMessageMetadata) {
     setDateTimeInput("task-start", metadata.receivedDate);
     const plusOneHour = new Date(metadata.receivedDate.getTime() + 60 * 60 * 1000);
     setDateTimeInput("task-end", plusOneHour);
+    setDateTimeInput("finance-date", metadata.receivedDate);
   }
 }
 
@@ -1345,7 +1385,7 @@ function renderProjectSelects(forceManualOnly: boolean) {
   });
 }
 
-function getProjectRecordId(prefix: "task" | "event" | "document" | "note"): string {
+function getProjectRecordId(prefix: "task" | "event" | "document" | "note" | "finance"): string {
   const input = document.getElementById(`${prefix}-project-input`) as HTMLInputElement | null;
   const value = input?.value?.trim() ?? "";
   if (!value) {
@@ -1499,44 +1539,61 @@ function schedulePersonNameCheck(value: string) {
   if (personNameCheckTimer) {
     window.clearTimeout(personNameCheckTimer);
   }
-  personNameCheckTimer = window.setTimeout(() => checkPersonNameDuplicate(value), 400);
+  const seq = ++personNameCheckSeq;
+  personNameCheckTimer = window.setTimeout(() => checkPersonNameDuplicate(value, seq), 400);
 }
 
 function schedulePersonEmailCheck(value: string) {
   if (personEmailCheckTimer) {
     window.clearTimeout(personEmailCheckTimer);
   }
-  personEmailCheckTimer = window.setTimeout(() => checkPersonEmailDuplicate(value), 400);
+  const seq = ++personEmailCheckSeq;
+  personEmailCheckTimer = window.setTimeout(() => checkPersonEmailDuplicate(value, seq), 400);
 }
 
 function scheduleCompanyNameCheck(value: string) {
   if (companyNameCheckTimer) {
     window.clearTimeout(companyNameCheckTimer);
   }
-  companyNameCheckTimer = window.setTimeout(() => checkCompanyNameDuplicate(value), 400);
+  const seq = ++companyNameCheckSeq;
+  companyNameCheckTimer = window.setTimeout(() => checkCompanyNameDuplicate(value, seq), 400);
 }
 
-function checkPersonNameDuplicate(raw: string) {
+async function checkPersonNameDuplicate(raw: string, seq: number) {
   const name = raw.trim();
   if (!name) {
     setHint("person-duplicate-hint", "", "info");
     return;
   }
+  setHint("person-duplicate-hint", "Pruefe Name...", "info");
   const match = externalOptions.find((person) => person.name?.toLowerCase() === name.toLowerCase());
   if (match) {
     const extra = match.email ? ` (${match.email})` : "";
     setHint("person-duplicate-hint", `Person existiert bereits: ${match.name}${extra}`, "success");
-  } else {
-    setHint("person-duplicate-hint", "Keine bestehende Person gefunden.", "info");
+    return;
+  }
+  try {
+    const remoteMatch = await airtableClient.findPersonByName(name);
+    if (seq !== personNameCheckSeq) return;
+    if (remoteMatch) {
+      const extra = remoteMatch.email ? ` (${remoteMatch.email})` : "";
+      setHint("person-duplicate-hint", `Person existiert bereits: ${remoteMatch.name}${extra}`, "success");
+    } else {
+      setHint("person-duplicate-hint", "Keine bestehende Person gefunden.", "info");
+    }
+  } catch (error) {
+    if (seq !== personNameCheckSeq) return;
+    setHint("person-duplicate-hint", "Pruefung fehlgeschlagen.", "warn");
   }
 }
 
-function checkPersonEmailDuplicate(raw: string) {
+async function checkPersonEmailDuplicate(raw: string, seq: number) {
   const email = raw.trim().toLowerCase();
   if (!email) {
     setHint("person-email-duplicate-hint", "", "info");
     return;
   }
+  setHint("person-email-duplicate-hint", "Pruefe E-Mail...", "info");
   const match = externalOptions.find((person) => person.email?.toLowerCase() === email);
   if (match) {
     setHint(
@@ -1544,22 +1601,49 @@ function checkPersonEmailDuplicate(raw: string) {
       `E-Mail existiert bereits: ${match.name ?? match.email}`,
       "success"
     );
-  } else {
-    setHint("person-email-duplicate-hint", "E-Mail noch nicht vorhanden.", "info");
+    return;
+  }
+  try {
+    const remoteMatch = await airtableClient.findPersonByEmail(email);
+    if (seq !== personEmailCheckSeq) return;
+    if (remoteMatch) {
+      setHint(
+        "person-email-duplicate-hint",
+        `E-Mail existiert bereits: ${remoteMatch.name ?? remoteMatch.email}`,
+        "success"
+      );
+    } else {
+      setHint("person-email-duplicate-hint", "E-Mail noch nicht vorhanden.", "info");
+    }
+  } catch (error) {
+    if (seq !== personEmailCheckSeq) return;
+    setHint("person-email-duplicate-hint", "Pruefung fehlgeschlagen.", "warn");
   }
 }
 
-function checkCompanyNameDuplicate(raw: string) {
+async function checkCompanyNameDuplicate(raw: string, seq: number) {
   const name = raw.trim();
   if (!name) {
     setHint("company-duplicate-hint", "", "info");
     return;
   }
+  setHint("company-duplicate-hint", "Pruefe Firma...", "info");
   const match = companyOptions.find((company) => company.name?.toLowerCase() === name.toLowerCase());
   if (match) {
     setHint("company-duplicate-hint", `Firma existiert bereits: ${match.name}`, "success");
-  } else {
-    setHint("company-duplicate-hint", "Keine bestehende Firma gefunden.", "info");
+    return;
+  }
+  try {
+    const remoteMatch = await airtableClient.findCompanyByName(name);
+    if (seq !== companyNameCheckSeq) return;
+    if (remoteMatch) {
+      setHint("company-duplicate-hint", `Firma existiert bereits: ${remoteMatch.name}`, "success");
+    } else {
+      setHint("company-duplicate-hint", "Keine bestehende Firma gefunden.", "info");
+    }
+  } catch (error) {
+    if (seq !== companyNameCheckSeq) return;
+    setHint("company-duplicate-hint", "Pruefung fehlgeschlagen.", "warn");
   }
 }
 

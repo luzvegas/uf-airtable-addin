@@ -1,6 +1,7 @@
 import { defaultAirtableConfig } from "../config/airtableConfig";
 import {
   AirtableDocumentPayload,
+  AirtableFinancePayload,
   AirtablePersonPayload,
   AirtableCompanyPayload,
   AirtableProjectOption,
@@ -276,6 +277,28 @@ export class AirtableClient {
     return this.createRecord(this.config.baseIds.notes || this.config.baseIds.tasks, this.config.tableNames.notes, fields);
   }
 
+  async createFinance(payload: AirtableFinancePayload) {
+    const fields: Record<string, unknown> = {
+      fldYtyWccdgOH5iW5: payload.title || payload.message.subject, // Dokumententitel
+      fldfuFoZkSXqkK3t0: payload.type || "Offerte", // Typ
+      fldA6DPHXVei5tqRQ: payload.date ?? payload.message.receivedDate?.toISOString() ?? null, // Datum
+      fldwWQ8LkZaeaCDl0: payload.amount ?? null, // Betrag
+      fldnvmo7YvGky5hrV: payload.description ?? "", // Beschreibung
+      ...(payload.channel ? { fldC1Sl1RRetFIVB3: payload.channel } : {}), // Vereinbarungskanal
+      ...(payload.offerStatus ? { fldfxvVZcBnPbWwLm: payload.offerStatus } : {}), // Status Offerte
+    };
+
+    if (payload.projectRecordId && payload.projectRecordId.startsWith("rec")) {
+      fields.fldE8dumjzNH4dBVF = [payload.projectRecordId]; // Projekt
+    }
+
+    return this.createRecord(
+      this.config.baseIds.finance || this.config.baseIds.tasks,
+      this.config.tableNames.finance,
+      fields
+    );
+  }
+
   async createPerson(payload: AirtablePersonPayload) {
     const fields = buildPersonFields(payload);
     return this.createRecord(
@@ -358,6 +381,28 @@ export class AirtableClient {
     const baseId = this.config.baseIds.persons || this.config.baseIds.tasks;
     const tableName = this.config.tableNames.persons;
     const formula = `LOWER({E-Mail})='${escapeAirtableFormulaValue(email.toLowerCase())}'`;
+    const records = await this.listRecords<Record<string, unknown>>(baseId, tableName, {
+      filterByFormula: formula,
+      fields: ["Name", "E-Mail"],
+    });
+    if (!records.length) {
+      return null;
+    }
+    const record = records[0];
+    return {
+      id: record.id,
+      name: pickProjectName(record.fields) ?? record.id,
+      email: pickEmail(record.fields),
+    };
+  }
+
+  async findPersonByName(name: string): Promise<AirtableProjectOption | null> {
+    if (!name) {
+      return null;
+    }
+    const baseId = this.config.baseIds.persons || this.config.baseIds.tasks;
+    const tableName = this.config.tableNames.persons;
+    const formula = `LOWER({Name})='${escapeAirtableFormulaValue(name.toLowerCase())}'`;
     const records = await this.listRecords<Record<string, unknown>>(baseId, tableName, {
       filterByFormula: formula,
       fields: ["Name", "E-Mail"],

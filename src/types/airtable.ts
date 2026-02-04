@@ -71,6 +71,18 @@ export interface AirtableNotePayload {
   message: OutlookMessageMetadata;
 }
 
+export interface AirtableFinancePayload {
+  title: string;
+  projectRecordId?: string;
+  type: "Offerte" | "Rechnung" | "Kreditor" | "Zahlung";
+  date?: string;
+  amount?: number;
+  description?: string;
+  offerStatus?: string;
+  channel?: string;
+  message: OutlookMessageMetadata;
+}
+
 export interface AirtablePersonPayload {
   name: string;
   email?: string;

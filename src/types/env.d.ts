@@ -8,6 +8,7 @@ declare const process: {
     AIRTABLE_BASE_PERSONS?: string;
     AIRTABLE_BASE_NOTES?: string;
     AIRTABLE_BASE_COMPANIES?: string;
+    AIRTABLE_BASE_FINANCE?: string;
     AIRTABLE_TABLE_TASKS?: string;
     AIRTABLE_TABLE_EVENTS?: string;
     AIRTABLE_TABLE_DOCUMENTS?: string;
@@ -15,6 +16,7 @@ declare const process: {
     AIRTABLE_TABLE_PERSONS?: string;
     AIRTABLE_TABLE_NOTES?: string;
     AIRTABLE_TABLE_COMPANIES?: string;
+    AIRTABLE_TABLE_FINANCE?: string;
     AIRTABLE_VIEW_COMPANIES?: string;
     NODE_ENV?: string;
     [key: string]: string | undefined;
