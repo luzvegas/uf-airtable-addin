@@ -145,11 +145,15 @@
             </div>
         </section>
 
-        <div class="tabs">
-            <button class="tab-btn active" data-tab-target="tab-tasks">Tasks/Termine</button>
-            <button class="tab-btn" data-tab-target="tab-docs">Dokumente/Links</button>
-            <button class="tab-btn" data-tab-target="tab-notes">Gesprächsnotizen</button>
-            <button class="tab-btn" data-tab-target="tab-finance">Offerten</button>
+        <div class="section-selector card">
+            <label>Bereich wählen
+                <select id="section-select">
+                    <option value="tab-tasks" selected>Tasks/Termine</option>
+                    <option value="tab-docs">Dokumente/Links</option>
+                    <option value="tab-notes">Gesprächsnotizen</option>
+                    <option value="tab-finance">Offerten</option>
+                </select>
+            </label>
         </div>
 
         <div class="tab-panel active" id="tab-tasks">

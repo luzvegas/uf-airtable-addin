@@ -180,14 +180,27 @@ function wireUpForms() {
 }
 
 function setupTabs() {
-  const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>(".tab-btn"));
   const panels = Array.from(document.querySelectorAll<HTMLElement>(".tab-panel"));
+  const select = document.getElementById("section-select") as HTMLSelectElement | null;
+  const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>(".tab-btn"));
 
   const activate = (targetId: string) => {
-    buttons.forEach((btn) => btn.classList.toggle("active", btn.dataset.tabTarget === targetId));
     panels.forEach((panel) => panel.classList.toggle("active", panel.id === targetId));
+    buttons.forEach((btn) => btn.classList.toggle("active", btn.dataset.tabTarget === targetId));
     refreshLookupData();
   };
+
+  if (select) {
+    select.addEventListener("change", () => {
+      if (select.value) {
+        activate(select.value);
+      }
+    });
+    if (select.value) {
+      activate(select.value);
+    }
+    return;
+  }
 
   buttons.forEach((btn) => {
     btn.addEventListener("click", () => {

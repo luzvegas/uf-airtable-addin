@@ -417,6 +417,24 @@ textarea {
   border-radius: 12px 12px 0 0;
 }
 
+.section-selector {
+  width: 100%;
+  max-width: 900px;
+  margin: 12px auto 0 auto;
+  padding: 10px 14px;
+  box-sizing: border-box;
+}
+
+.section-selector label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.section-selector select {
+  width: 100%;
+}
+
 .tab-btn {
   padding: 16px 18px;
   border: 1px solid #c8c6c4;
