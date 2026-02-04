@@ -425,6 +425,12 @@ textarea {
   box-sizing: border-box;
 }
 
+.section-selector.card {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
 .section-selector label {
   display: flex;
   flex-direction: column;
