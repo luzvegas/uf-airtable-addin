@@ -433,6 +433,12 @@ textarea {
 
 .section-selector select {
   width: 100%;
+  background: #03588C;
+  color: #ffffff;
+  font-weight: 400;
+  border: 1px solid #03588C;
+  border-radius: 8px;
+  padding: 10px 12px;
 }
 
 .tab-btn {
