@@ -436,9 +436,9 @@ textarea {
   background: #03588C;
   color: #ffffff;
   font-weight: 400;
-  border: 1px solid #03588C;
-  border-radius: 8px;
-  padding: 10px 12px;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 10px;
 }
 
 .section-selector select option {
