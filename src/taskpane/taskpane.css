@@ -437,6 +437,12 @@ textarea {
   gap: 6px;
 }
 
+.section-selector .section-title {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text-main);
+}
+
 .section-selector select {
   width: 100%;
   background: #03588C;
