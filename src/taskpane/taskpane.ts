@@ -710,6 +710,7 @@ async function handleFinanceSubmit(event: Event) {
   }
 
   await executeWithStatus("finance-status", async () => {
+    const titleInput = getInputValue("finance-title");
     const offerStatus = getInputValue("finance-offer-status") || undefined;
     const channel = getInputValue("finance-channel") || "Mail";
     const amountRaw = getInputValue("finance-amount");
@@ -717,7 +718,7 @@ async function handleFinanceSubmit(event: Event) {
     const dateIso = convertDateToIso(document.getElementById("finance-date") as HTMLInputElement, true);
 
     const payload: AirtableFinancePayload = {
-      title: messageMetadata.subject,
+      title: titleInput || messageMetadata.subject,
       projectRecordId: getProjectRecordId("finance"),
       type: "Offerte",
       date: dateIso,
@@ -1157,6 +1158,7 @@ function buildOutlookWebLink(itemId: string): string | undefined {
 
 function prefillFormDefaults(metadata: OutlookMessageMetadata) {
   setIfEmpty("task-title", metadata.subject);
+  setIfEmpty("finance-title", metadata.subject);
 
   if (metadata.receivedDate) {
     setDateTimeInput("task-start", metadata.receivedDate);
