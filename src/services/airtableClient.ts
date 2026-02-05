@@ -237,7 +237,8 @@ export class AirtableClient {
   }
   async createDocument(payload: AirtableDocumentPayload) {
     const fields: Record<string, unknown> = {
-      fldetAgRaOKc7Smlr: payload.label ?? "", // Dokumententitel
+      // Dokumententitel is an aiText field (read-only); store manual title in Beschreibung.
+      fldfxvIdkJRcbjZKE: payload.label ?? "", // Beschreibung
     };
 
     if (payload.projectRecordId && payload.projectRecordId.startsWith("rec")) {
