@@ -32,6 +32,7 @@ const LINK_TITLE_PROXY = (process.env.TITLE_PROXY_URL || "").trim();
 const GRAPH_CLIENT_ID = (process.env.GRAPH_CLIENT_ID || "").trim();
 const GRAPH_TENANT_ID = (process.env.GRAPH_TENANT_ID || "common").trim();
 const GRAPH_REDIRECT_URI = (process.env.GRAPH_REDIRECT_URI || "").trim();
+const LOOKUP_REFRESH_THROTTLE_MS = 20000;
 
 let attachments: OutlookAttachmentPreview[] = [];
 let detectedLinks: string[] = [];
@@ -946,7 +947,7 @@ function renderCompanyCategoryTokens() {
 
 async function refreshLookupData(force = false) {
   const now = Date.now();
-  if (!force && now - lastLookupRefreshAt < 30000) {
+  if (!force && now - lastLookupRefreshAt < LOOKUP_REFRESH_THROTTLE_MS) {
     return;
   }
   lastLookupRefreshAt = now;
@@ -1515,6 +1516,7 @@ function togglePersonForm(forceCollapsed?: boolean) {
     typeof forceCollapsed === "boolean" ? forceCollapsed : container.classList.toggle("collapsed");
   container.classList.toggle("collapsed", isCollapsed);
   toggle.textContent = isCollapsed ? "Person erfassen" : "Person ausblenden";
+  void refreshLookupData();
 }
 
 function toggleCompanyForm(forceCollapsed?: boolean) {
@@ -1527,6 +1529,7 @@ function toggleCompanyForm(forceCollapsed?: boolean) {
     typeof forceCollapsed === "boolean" ? forceCollapsed : container.classList.toggle("collapsed");
   container.classList.toggle("collapsed", isCollapsed);
   toggle.textContent = isCollapsed ? "Firma erfassen" : "Firma ausblenden";
+  void refreshLookupData();
 }
 
 function normalizeRoleValues(values: string[]): string[] {
