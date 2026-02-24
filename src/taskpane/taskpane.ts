@@ -737,7 +737,7 @@ async function handleFinanceSubmit(event: Event) {
       type: "Offerte",
       date: dateIso,
       amount: Number.isFinite(amount as number) ? (amount as number) : undefined,
-      description: truncateForAirtable(sanitizeForAirtableText(messageBodyText)),
+      description: truncateForAirtable(sanitizeForAirtableText(buildMailDescription(messageBodyText))),
       offerStatus,
       channel,
       message: messageMetadata,
@@ -1430,7 +1430,7 @@ function setProjectStatus(message: string, type: "pending" | "success" | "error"
 function prefillBodyIntoDescription(body: string) {
   const description = document.getElementById("task-description") as HTMLTextAreaElement | null;
   if (description && !description.value) {
-    description.value = normalizeBodyText(limitBodyText(body || "", 12000));
+    description.value = buildMailDescription(body);
   }
 }
 
@@ -1443,6 +1443,27 @@ function prefillNoteDefaults(body: string) {
   if (note && !note.value) {
     note.value = normalizeBodyText(limitBodyText(body || "", 12000));
   }
+}
+
+function buildMailDescription(body: string): string {
+  const headerLines: string[] = [];
+  if (messageMetadata?.from) {
+    headerLines.push(`Von: ${messageMetadata.from}`);
+  }
+  if (messageMetadata?.receivedDate) {
+    headerLines.push(`Datum: ${messageMetadata.receivedDate.toLocaleString()}`);
+  }
+  if (messageMetadata?.subject) {
+    headerLines.push(`Betreff: ${messageMetadata.subject}`);
+  }
+
+  const header = headerLines.join("\n");
+  const content = normalizeBodyText(limitBodyText(body || "", 12000));
+
+  if (header && content) {
+    return `${header}\n\n${content}`;
+  }
+  return header || content;
 }
 
 function prefillCompanyFromSender() {
