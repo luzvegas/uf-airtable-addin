@@ -2009,7 +2009,8 @@ async function uploadToOneDriveAndShare(
     return null;
   }
 
-  // Versuche direkten Download-Link (prä-authentifizierter, kurzlebiger Link)
+  // Download-Link nur als Fallback vormerken.
+  let fallbackDownloadUrl: string | null = null;
   try {
     const dlResp = await fetch(
       `https://graph.microsoft.com/v1.0/me/drive/items/${itemId}?select=name,@microsoft.graph.downloadUrl`,
@@ -2025,7 +2026,7 @@ async function uploadToOneDriveAndShare(
       const dlUrl = dlBody?.["@microsoft.graph.downloadUrl"];
       if (dlUrl) {
         console.info("Download-URL verwendet für", filename, dlUrl);
-        return { filename, url: dlUrl };
+        fallbackDownloadUrl = dlUrl;
       }
     } else {
       console.warn("Download-URL Abfrage fehlgeschlagen:", await dlResp.text());
@@ -2051,11 +2052,17 @@ async function uploadToOneDriveAndShare(
     }
 
     const linkBody = await linkResp.json();
-    const url = linkBody?.link?.webUrl || uploaded?.webUrl;
+    const baseUrl = linkBody?.link?.webUrl || uploaded?.webUrl;
+    const url = baseUrl ? `${baseUrl}${baseUrl.includes("?") ? "&" : "?"}download=1` : "";
     if (url) {
       console.info(`Share-Link (${scope}) erhalten für`, filename, url);
       return { filename, url };
     }
+  }
+
+  if (fallbackDownloadUrl) {
+    console.info("Download-URL verwendet für", filename, fallbackDownloadUrl);
+    return { filename, url: fallbackDownloadUrl };
   }
 
   if (uploaded?.webUrl) {

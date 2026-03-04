@@ -370,8 +370,7 @@ export class AirtableClient {
     return this.getRecord<Record<string, unknown>>(
       this.config.baseIds.persons || this.config.baseIds.tasks,
       this.config.tableNames.persons,
-      recordId,
-      ["Name", "E-Mail", "Telefon (Mobil)", "Telefon", "Position", "Rolle", "Firmen"]
+      recordId
     );
   }
 
