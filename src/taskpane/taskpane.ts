@@ -57,6 +57,8 @@ let companyNameCheckTimer: number | undefined;
 let personNameCheckSeq = 0;
 let personEmailCheckSeq = 0;
 let companyNameCheckSeq = 0;
+let duplicatePersonMatchByNameId: string | null = null;
+let duplicatePersonMatchByEmailId: string | null = null;
 
 function getEligibleAttachments(): OutlookAttachmentPreview[] {
   return attachments.filter((att) => !att.isInline);
@@ -73,6 +75,7 @@ Office.onReady(async (info) => {
 async function initializePane() {
   setUiVersion();
   wireUpForms();
+  refreshPersonActionButton();
   setupTabs();
   await Promise.all([
     hydrateContext(),
@@ -179,6 +182,24 @@ function wireUpForms() {
       }
     });
   }
+}
+
+function refreshPersonActionButton() {
+  const button = document.getElementById("create-person-btn") as HTMLButtonElement | null;
+  if (!button) {
+    return;
+  }
+  const existingId = duplicatePersonMatchByEmailId || duplicatePersonMatchByNameId;
+  button.textContent = existingId ? "Person aus Absender aktualisieren" : "Person aus Absender anlegen";
+}
+
+function setPersonDuplicateMatch(source: "name" | "email", recordId: string | null) {
+  if (source === "name") {
+    duplicatePersonMatchByNameId = recordId;
+  } else {
+    duplicatePersonMatchByEmailId = recordId;
+  }
+  refreshPersonActionButton();
 }
 
 function setupTabs() {
@@ -809,6 +830,8 @@ async function handleCreatePersonFromSender() {
     }
 
     if (existingId) {
+      setPersonDuplicateMatch("name", existingId);
+      setPersonDuplicateMatch("email", existingId);
       const updateResult = await updateExistingPerson(existingId, payload);
       if (updateResult.updated) {
         const updated = updateResult.updatedFields.join(", ");
@@ -827,6 +850,8 @@ async function handleCreatePersonFromSender() {
     await airtableClient.createPerson(payload);
     setStatus("person-status", "Person existiert nicht. Neuer Datensatz wird angelegt ...", "success");
     await loadExternalPersons();
+    setPersonDuplicateMatch("name", null);
+    setPersonDuplicateMatch("email", null);
     setStatus("person-status", "Person existiert nicht. Neuer Datensatz wurde angelegt.", "success");
     togglePersonForm(true);
   } catch (error) {
@@ -1368,10 +1393,14 @@ function triggerPrefilledPersonDuplicateChecks() {
   if (name) {
     const seq = ++personNameCheckSeq;
     void checkPersonNameDuplicate(name, seq);
+  } else {
+    setPersonDuplicateMatch("name", null);
   }
   if (email) {
     const seq = ++personEmailCheckSeq;
     void checkPersonEmailDuplicate(email, seq);
+  } else {
+    setPersonDuplicateMatch("email", null);
   }
 }
 
@@ -1812,6 +1841,7 @@ async function checkPersonNameDuplicate(raw: string, seq: number) {
   const name = raw.trim();
   if (!name) {
     setHint("person-duplicate-hint", "", "info");
+    setPersonDuplicateMatch("name", null);
     return;
   }
   setHint("person-duplicate-hint", "Pruefe Name...", "info");
@@ -1819,6 +1849,7 @@ async function checkPersonNameDuplicate(raw: string, seq: number) {
   if (match) {
     const extra = match.email ? ` (${match.email})` : "";
     setHint("person-duplicate-hint", `Person existiert bereits: ${match.name}${extra}`, "success");
+    setPersonDuplicateMatch("name", match.id);
     await loadExistingPersonIntoForm(match.id);
     return;
   }
@@ -1828,9 +1859,11 @@ async function checkPersonNameDuplicate(raw: string, seq: number) {
     if (remoteMatch) {
       const extra = remoteMatch.email ? ` (${remoteMatch.email})` : "";
       setHint("person-duplicate-hint", `Person existiert bereits: ${remoteMatch.name}${extra}`, "success");
+      setPersonDuplicateMatch("name", remoteMatch.id);
       await loadExistingPersonIntoForm(remoteMatch.id);
     } else {
       setHint("person-duplicate-hint", "Keine bestehende Person gefunden.", "info");
+      setPersonDuplicateMatch("name", null);
     }
   } catch (error) {
     if (seq !== personNameCheckSeq) return;
@@ -1842,6 +1875,7 @@ async function checkPersonEmailDuplicate(raw: string, seq: number) {
   const email = raw.trim().toLowerCase();
   if (!email) {
     setHint("person-email-duplicate-hint", "", "info");
+    setPersonDuplicateMatch("email", null);
     return;
   }
   setHint("person-email-duplicate-hint", "Pruefe E-Mail...", "info");
@@ -1852,6 +1886,7 @@ async function checkPersonEmailDuplicate(raw: string, seq: number) {
       `E-Mail existiert bereits: ${match.name ?? match.email}`,
       "success"
     );
+    setPersonDuplicateMatch("email", match.id);
     await loadExistingPersonIntoForm(match.id);
     return;
   }
@@ -1864,9 +1899,11 @@ async function checkPersonEmailDuplicate(raw: string, seq: number) {
         `E-Mail existiert bereits: ${remoteMatch.name ?? remoteMatch.email}`,
         "success"
       );
+      setPersonDuplicateMatch("email", remoteMatch.id);
       await loadExistingPersonIntoForm(remoteMatch.id);
     } else {
       setHint("person-email-duplicate-hint", "E-Mail noch nicht vorhanden.", "info");
+      setPersonDuplicateMatch("email", null);
     }
   } catch (error) {
     if (seq !== personEmailCheckSeq) return;
