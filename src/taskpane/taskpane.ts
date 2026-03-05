@@ -83,6 +83,7 @@ async function initializePane() {
     loadPersonRoles(),
     loadCompanyCategories(),
   ]);
+  triggerPrefilledPersonDuplicateChecks();
 }
 
 function setUiVersion() {
@@ -793,8 +794,15 @@ async function handleCreatePersonFromSender() {
       if (existing) {
         existingId = existing.id;
       }
-    } else if (companyRecordIds.length && name) {
+    }
+    if (!existingId && companyRecordIds.length && name) {
       const existing = await airtableClient.findPersonByNameAndCompany(name, companyRecordIds[0]);
+      if (existing) {
+        existingId = existing.id;
+      }
+    }
+    if (!existingId && name) {
+      const existing = await airtableClient.findPersonByName(name);
       if (existing) {
         existingId = existing.id;
       }
@@ -806,13 +814,12 @@ async function handleCreatePersonFromSender() {
         const fieldLabel = updateResult.updatedFields.join(", ");
         setStatus(
           "person-status",
-          `Person existiert bereits – aktualisiert: ${fieldLabel}`,
+          `Person existiert bereits. Kein neuer Datensatz erstellt. Bestehenden Datensatz ergänzt: ${fieldLabel}.`,
           "success"
         );
       } else {
-        setStatus("person-status", "Person existiert bereits – keine neuen Daten.", "success");
+        setStatus("person-status", "Person existiert bereits. Kein neuer Datensatz erstellt.", "success");
       }
-      togglePersonForm(true);
       return;
     }
 
@@ -1202,6 +1209,22 @@ function prefillPersonDefaults(item: Office.MessageRead) {
   }
   if (phoneInput && !phoneInput.value && signatureInfo.phone) {
     phoneInput.value = signatureInfo.phone;
+  }
+}
+
+function triggerPrefilledPersonDuplicateChecks() {
+  const nameInput = document.getElementById("person-name") as HTMLInputElement | null;
+  const emailInput = document.getElementById("person-email") as HTMLInputElement | null;
+  const name = nameInput?.value?.trim() ?? "";
+  const email = emailInput?.value?.trim() ?? "";
+
+  if (name) {
+    const seq = ++personNameCheckSeq;
+    void checkPersonNameDuplicate(name, seq);
+  }
+  if (email) {
+    const seq = ++personEmailCheckSeq;
+    void checkPersonEmailDuplicate(email, seq);
   }
 }
 
