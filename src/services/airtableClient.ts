@@ -310,20 +310,7 @@ export class AirtableClient {
   }
 
   async createCompany(payload: AirtableCompanyPayload) {
-    const fields: Record<string, unknown> = {
-      fldmITToK7sLr9p9O: payload.name, // Firmenname
-      ...(payload.email ? { fld54oqgUsBHnNFCa: payload.email } : {}), // E-Mail
-      ...(payload.phone ? { fldWp2bz7Ru7jj7YX: payload.phone } : {}), // Telefon
-      ...(payload.website ? { fldb1CFwpD1401SST: payload.website } : {}), // Webseite
-      ...(payload.street ? { fldF4dudLsTjTub4l: payload.street } : {}), // Strasse
-      ...(payload.houseNumber ? { fldldbvNFOA8dW9oV: payload.houseNumber } : {}), // Hausnummer
-      ...(payload.zip !== undefined ? { fldfwId2Hve27J1bo: payload.zip } : {}), // PLZ
-      ...(payload.city ? { fldiAinnORZ3C13aL: payload.city } : {}), // Ort
-      ...(payload.country ? { fld8oORAAn6bT5zMe: payload.country } : {}), // Land
-      ...(payload.language ? { fldmjPI2d2cXVglhM: payload.language } : {}), // Sprache
-      ...(payload.categories?.length ? { fld7HEVhIfnFk5ZAt: payload.categories } : {}), // Kategorie
-    };
-
+    const fields = buildCompanyFields(payload);
     return this.createRecord(this.config.baseIds.companies || this.config.baseIds.tasks, this.config.tableNames.companies, fields);
   }
 
@@ -363,6 +350,19 @@ export class AirtableClient {
     );
   }
 
+  async updateCompany(recordId: string, payload: Partial<AirtableCompanyPayload>) {
+    const fields = buildCompanyFields(payload);
+    if (!recordId || !Object.keys(fields).length) {
+      return null;
+    }
+    return this.updateRecord(
+      this.config.baseIds.companies || this.config.baseIds.tasks,
+      this.config.tableNames.companies,
+      recordId,
+      fields
+    );
+  }
+
   async getPersonRecord(recordId: string) {
     if (!recordId) {
       return null;
@@ -370,6 +370,17 @@ export class AirtableClient {
     return this.getRecord<Record<string, unknown>>(
       this.config.baseIds.persons || this.config.baseIds.tasks,
       this.config.tableNames.persons,
+      recordId
+    );
+  }
+
+  async getCompanyRecord(recordId: string) {
+    if (!recordId) {
+      return null;
+    }
+    return this.getRecord<Record<string, unknown>>(
+      this.config.baseIds.companies || this.config.baseIds.tasks,
+      this.config.tableNames.companies,
       recordId
     );
   }
@@ -716,6 +727,44 @@ function buildPersonFields(payload: Partial<AirtablePersonPayload>): Record<stri
     if (valid.length) {
       fields.fldKg2TWXArwWDuPj = valid; // Firmen (linked record IDs)
     }
+  }
+  return fields;
+}
+
+function buildCompanyFields(payload: Partial<AirtableCompanyPayload>): Record<string, unknown> {
+  const fields: Record<string, unknown> = {};
+  if (payload.name) {
+    fields.fldmITToK7sLr9p9O = payload.name; // Firmenname
+  }
+  if (payload.email) {
+    fields.fld54oqgUsBHnNFCa = payload.email; // E-Mail
+  }
+  if (payload.phone) {
+    fields.fldWp2bz7Ru7jj7YX = payload.phone; // Telefon
+  }
+  if (payload.website) {
+    fields.fldb1CFwpD1401SST = payload.website; // Webseite
+  }
+  if (payload.street) {
+    fields.fldF4dudLsTjTub4l = payload.street; // Strasse
+  }
+  if (payload.houseNumber) {
+    fields.fldldbvNFOA8dW9oV = payload.houseNumber; // Hausnummer
+  }
+  if (payload.zip !== undefined && Number.isFinite(payload.zip)) {
+    fields.fldfwId2Hve27J1bo = payload.zip; // PLZ
+  }
+  if (payload.city) {
+    fields.fldiAinnORZ3C13aL = payload.city; // Ort
+  }
+  if (payload.country) {
+    fields.fld8oORAAn6bT5zMe = payload.country; // Land
+  }
+  if (payload.language) {
+    fields.fldmjPI2d2cXVglhM = payload.language; // Sprache
+  }
+  if (payload.categories?.length) {
+    fields.fld7HEVhIfnFk5ZAt = payload.categories; // Kategorie
   }
   return fields;
 }

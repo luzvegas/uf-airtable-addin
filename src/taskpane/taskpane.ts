@@ -811,22 +811,22 @@ async function handleCreatePersonFromSender() {
     if (existingId) {
       const updateResult = await updateExistingPerson(existingId, payload);
       if (updateResult.updated) {
-        const fieldLabel = updateResult.updatedFields.join(", ");
-        setStatus(
-          "person-status",
-          `Person existiert bereits. Kein neuer Datensatz erstellt. Bestehenden Datensatz ergänzt: ${fieldLabel}.`,
-          "success"
-        );
+        const updated = updateResult.updatedFields.join(", ");
+        const changed =
+          updateResult.differentExistingFields.length > 0
+            ? ` Anderer Wert existiert bei: ${updateResult.differentExistingFields.join(", ")}.`
+            : "";
+        setStatus("person-status", `Person existiert bereits.${changed} Datensatz aktualisiert: ${updated}.`, "success");
       } else {
-        setStatus("person-status", "Person existiert bereits. Kein neuer Datensatz erstellt.", "success");
+        setStatus("person-status", "Person existiert bereits. Alle geprueften Werte sind bereits vorhanden.", "success");
       }
       return;
     }
 
     await airtableClient.createPerson(payload);
-    setStatus("person-status", "Person wurde in Airtable angelegt. Aktualisiere Liste ...", "success");
+    setStatus("person-status", "Person existiert nicht. Neuer Datensatz wird angelegt ...", "success");
     await loadExternalPersons();
-    setStatus("person-status", "Person wurde in Airtable angelegt.", "success");
+    setStatus("person-status", "Person existiert nicht. Neuer Datensatz wurde angelegt.", "success");
     togglePersonForm(true);
   } catch (error) {
     console.error(error);
@@ -860,11 +860,6 @@ async function handleCreateCompanyFromForm() {
     const existing =
       companyOptions.find((company) => company.name.toLowerCase() === name.toLowerCase()) ??
       (await airtableClient.findCompanyByName(name));
-    if (existing) {
-      setStatus("company-status", `Firma existiert bereits: ${existing.name}`, "success");
-      toggleCompanyForm(true);
-      return;
-    }
 
     const zipValue = zipInput?.value ? Number(zipInput.value) : undefined;
     if (categoryInput?.value?.trim()) {
@@ -886,15 +881,31 @@ async function handleCreateCompanyFromForm() {
       categories: categories.length ? categories : undefined,
     };
 
+    if (existing) {
+      const updateResult = await updateExistingCompany(existing.id, payload);
+      if (updateResult.updated) {
+        const updated = updateResult.updatedFields.join(", ");
+        const changed =
+          updateResult.differentExistingFields.length > 0
+            ? ` Anderer Wert existiert bei: ${updateResult.differentExistingFields.join(", ")}.`
+            : "";
+        setStatus("company-status", `Firma existiert bereits.${changed} Datensatz aktualisiert: ${updated}.`, "success");
+      } else {
+        setStatus("company-status", "Firma existiert bereits. Alle geprueften Werte sind bereits vorhanden.", "success");
+      }
+      await loadCompanies();
+      return;
+    }
+
     await airtableClient.createCompany(payload);
-    setStatus("company-status", "Firma wurde in Airtable angelegt. Aktualisiere Liste ...", "success");
+    setStatus("company-status", "Firma existiert nicht. Neuer Datensatz wird angelegt ...", "success");
     companyCategoryTokens = [];
     renderCompanyCategoryTokens();
     await loadCompanies();
     if (personCompanyInput) {
       personCompanyInput.value = name;
     }
-    setStatus("company-status", "Firma wurde in Airtable angelegt.", "success");
+    setStatus("company-status", "Firma existiert nicht. Neuer Datensatz wurde angelegt.", "success");
     toggleCompanyForm(true);
   } catch (error) {
     console.error(error);
@@ -973,13 +984,20 @@ function removeCompanyCategoryToken(token: string) {
   renderCompanyCategoryTokens();
 }
 
+type EntitySyncResult = {
+  updated: boolean;
+  updatedFields: string[];
+  differentExistingFields: string[];
+  unchangedFields: string[];
+};
+
 async function updateExistingPerson(
   recordId: string,
   payload: AirtablePersonPayload
-): Promise<{ updated: boolean; updatedFields: string[] }> {
+): Promise<EntitySyncResult> {
   const existingRecord = await airtableClient.getPersonRecord(recordId);
   if (!existingRecord) {
-    return { updated: false, updatedFields: [] };
+    return { updated: false, updatedFields: [], differentExistingFields: [], unchangedFields: [] };
   }
   const fields = existingRecord.fields as Record<string, unknown>;
   const existingName = typeof fields.Name === "string" ? fields.Name.trim() : "";
@@ -991,48 +1009,169 @@ async function updateExistingPerson(
 
   const updates: Partial<AirtablePersonPayload> = {};
   const updatedFields: string[] = [];
-  if (!existingName && payload.name) {
-    updates.name = payload.name;
-    updatedFields.push("Name");
+  const differentExistingFields: string[] = [];
+  const unchangedFields: string[] = [];
+
+  if (payload.name) {
+    if (!existingName) {
+      updates.name = payload.name;
+      updatedFields.push("Name");
+    } else if (existingName.toLowerCase() !== payload.name.trim().toLowerCase()) {
+      updates.name = payload.name.trim();
+      updatedFields.push("Name");
+      differentExistingFields.push("Name");
+    } else {
+      unchangedFields.push("Name");
+    }
   }
-  if (!existingEmail && payload.email) {
-    updates.email = payload.email;
-    updatedFields.push("E-Mail");
-  } else if (
-    existingEmail &&
-    payload.email &&
-    existingEmail.toLowerCase() !== payload.email.trim().toLowerCase()
-  ) {
-    updates.email = payload.email.trim();
-    updatedFields.push("E-Mail (aktualisiert)");
+  if (payload.email) {
+    if (!existingEmail) {
+      updates.email = payload.email;
+      updatedFields.push("E-Mail");
+    } else if (existingEmail.toLowerCase() !== payload.email.trim().toLowerCase()) {
+      updates.email = payload.email.trim();
+      updatedFields.push("E-Mail");
+      differentExistingFields.push("E-Mail");
+    } else {
+      unchangedFields.push("E-Mail");
+    }
   }
-  if (!existingMobile && payload.phoneMobile) {
-    updates.phoneMobile = payload.phoneMobile;
-    updatedFields.push("Telefon (Mobil)");
+  if (payload.phoneMobile) {
+    if (!existingMobile) {
+      updates.phoneMobile = payload.phoneMobile;
+      updatedFields.push("Telefon (Mobil)");
+    } else if (existingMobile !== payload.phoneMobile.trim()) {
+      updates.phoneMobile = payload.phoneMobile.trim();
+      updatedFields.push("Telefon (Mobil)");
+      differentExistingFields.push("Telefon (Mobil)");
+    } else {
+      unchangedFields.push("Telefon (Mobil)");
+    }
   }
-  if (!existingPhone && payload.phone) {
-    updates.phone = payload.phone;
-    updatedFields.push("Telefon");
+  if (payload.phone) {
+    if (!existingPhone) {
+      updates.phone = payload.phone;
+      updatedFields.push("Telefon");
+    } else if (existingPhone !== payload.phone.trim()) {
+      updates.phone = payload.phone.trim();
+      updatedFields.push("Telefon");
+      differentExistingFields.push("Telefon");
+    } else {
+      unchangedFields.push("Telefon");
+    }
   }
 
   const mergedRoles = mergeUnique(existingRoles, payload.roleValues ?? []);
   if (mergedRoles.changed) {
     updates.roleValues = mergedRoles.values;
     updatedFields.push("Rolle");
+  } else if (payload.roleValues?.length) {
+    unchangedFields.push("Rolle");
   }
 
   const mergedCompanies = mergeUnique(existingCompanies, payload.companyRecordIds ?? []);
   if (mergedCompanies.changed) {
     updates.companyRecordIds = mergedCompanies.values;
     updatedFields.push("Firma");
+  } else if (payload.companyRecordIds?.length) {
+    unchangedFields.push("Firma");
   }
 
   if (!Object.keys(updates).length) {
-    return { updated: false, updatedFields: [] };
+    return { updated: false, updatedFields: [], differentExistingFields, unchangedFields };
   }
 
   await airtableClient.updatePerson(recordId, updates);
-  return { updated: true, updatedFields };
+  return { updated: true, updatedFields, differentExistingFields, unchangedFields };
+}
+
+async function updateExistingCompany(
+  recordId: string,
+  payload: AirtableCompanyPayload
+): Promise<EntitySyncResult> {
+  const existingRecord = await airtableClient.getCompanyRecord(recordId);
+  if (!existingRecord) {
+    return { updated: false, updatedFields: [], differentExistingFields: [], unchangedFields: [] };
+  }
+
+  const fields = existingRecord.fields as Record<string, unknown>;
+  const existingName = typeof fields.Firmenname === "string" ? fields.Firmenname.trim() : "";
+  const existingEmail = typeof fields["E-Mail"] === "string" ? fields["E-Mail"].trim() : "";
+  const existingPhone = typeof fields.Telefon === "string" ? fields.Telefon.trim() : "";
+  const existingWebsite = typeof fields.Webseite === "string" ? fields.Webseite.trim() : "";
+  const existingStreet = typeof fields.Strasse === "string" ? fields.Strasse.trim() : "";
+  const existingHouse = typeof fields.Hausnummer === "string" ? fields.Hausnummer.trim() : "";
+  const existingZip = typeof fields.PLZ === "number" ? fields.PLZ : Number(fields.PLZ ?? NaN);
+  const existingCity = typeof fields.Ort === "string" ? fields.Ort.trim() : "";
+  const existingCountry = typeof fields.Land === "string" ? fields.Land.trim() : "";
+  const existingLanguage = typeof fields.Sprache === "string" ? fields.Sprache.trim() : "";
+  const existingCategories = Array.isArray(fields.Kategorie) ? (fields.Kategorie as string[]) : [];
+
+  const updates: Partial<AirtableCompanyPayload> = {};
+  const updatedFields: string[] = [];
+  const differentExistingFields: string[] = [];
+  const unchangedFields: string[] = [];
+
+  const compareText = (
+    label: string,
+    incoming: string | undefined,
+    current: string,
+    assign: (value: string) => void
+  ) => {
+    if (!incoming) return;
+    const value = incoming.trim();
+    if (!value) return;
+    if (!current) {
+      assign(value);
+      updatedFields.push(label);
+      return;
+    }
+    if (current.toLowerCase() !== value.toLowerCase()) {
+      assign(value);
+      updatedFields.push(label);
+      differentExistingFields.push(label);
+      return;
+    }
+    unchangedFields.push(label);
+  };
+
+  compareText("Firmenname", payload.name, existingName, (value) => (updates.name = value));
+  compareText("E-Mail", payload.email, existingEmail, (value) => (updates.email = value));
+  compareText("Telefon", payload.phone, existingPhone, (value) => (updates.phone = value));
+  compareText("Webseite", payload.website, existingWebsite, (value) => (updates.website = value));
+  compareText("Strasse", payload.street, existingStreet, (value) => (updates.street = value));
+  compareText("Hausnummer", payload.houseNumber, existingHouse, (value) => (updates.houseNumber = value));
+  compareText("Ort", payload.city, existingCity, (value) => (updates.city = value));
+  compareText("Land", payload.country, existingCountry, (value) => (updates.country = value));
+  compareText("Sprache", payload.language, existingLanguage, (value) => (updates.language = value));
+
+  if (payload.zip !== undefined && Number.isFinite(payload.zip)) {
+    if (!Number.isFinite(existingZip)) {
+      updates.zip = payload.zip;
+      updatedFields.push("PLZ");
+    } else if (existingZip !== payload.zip) {
+      updates.zip = payload.zip;
+      updatedFields.push("PLZ");
+      differentExistingFields.push("PLZ");
+    } else {
+      unchangedFields.push("PLZ");
+    }
+  }
+
+  const mergedCategories = mergeUnique(existingCategories, payload.categories ?? []);
+  if (mergedCategories.changed) {
+    updates.categories = mergedCategories.values;
+    updatedFields.push("Kategorie");
+  } else if (payload.categories?.length) {
+    unchangedFields.push("Kategorie");
+  }
+
+  if (!Object.keys(updates).length) {
+    return { updated: false, updatedFields: [], differentExistingFields, unchangedFields };
+  }
+
+  await airtableClient.updateCompany(recordId, updates);
+  return { updated: true, updatedFields, differentExistingFields, unchangedFields };
 }
 
 function mergeUnique(existing: string[], incoming: string[]): { values: string[]; changed: boolean } {
