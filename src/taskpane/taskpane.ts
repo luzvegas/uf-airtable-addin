@@ -998,6 +998,13 @@ async function updateExistingPerson(
   if (!existingEmail && payload.email) {
     updates.email = payload.email;
     updatedFields.push("E-Mail");
+  } else if (
+    existingEmail &&
+    payload.email &&
+    existingEmail.toLowerCase() !== payload.email.trim().toLowerCase()
+  ) {
+    updates.email = payload.email.trim();
+    updatedFields.push("E-Mail (aktualisiert)");
   }
   if (!existingMobile && payload.phoneMobile) {
     updates.phoneMobile = payload.phoneMobile;
