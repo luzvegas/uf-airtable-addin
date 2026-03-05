@@ -820,6 +820,7 @@ async function handleCreatePersonFromSender() {
       } else {
         setStatus("person-status", "Person existiert bereits. Alle geprueften Werte sind bereits vorhanden.", "success");
       }
+      await loadExistingPersonIntoForm(existingId);
       return;
     }
 
@@ -1374,6 +1375,46 @@ function triggerPrefilledPersonDuplicateChecks() {
   }
 }
 
+async function loadExistingPersonIntoForm(recordId: string) {
+  if (!recordId) {
+    return;
+  }
+  try {
+    const record = await airtableClient.getPersonRecord(recordId);
+    if (!record) {
+      return;
+    }
+    const fields = record.fields as Record<string, unknown>;
+    const name = typeof fields.Name === "string" ? fields.Name.trim() : "";
+    const email = typeof fields["E-Mail"] === "string" ? fields["E-Mail"].trim() : "";
+    const phoneMobile = typeof fields["Telefon (Mobil)"] === "string" ? fields["Telefon (Mobil)"].trim() : "";
+    const phone = typeof fields.Telefon === "string" ? fields.Telefon.trim() : "";
+    const roles = Array.isArray(fields.Rolle) ? (fields.Rolle as string[]) : [];
+    const companyIds = Array.isArray(fields.Firmen) ? (fields.Firmen as string[]) : [];
+
+    const nameInput = document.getElementById("person-name") as HTMLInputElement | null;
+    const emailInput = document.getElementById("person-email") as HTMLInputElement | null;
+    const roleInput = document.getElementById("person-role-input") as HTMLInputElement | null;
+    const mobileInput = document.getElementById("person-phone-mobile") as HTMLInputElement | null;
+    const phoneInput = document.getElementById("person-phone") as HTMLInputElement | null;
+    const companyInput = document.getElementById("person-company-input") as HTMLInputElement | null;
+
+    if (nameInput) nameInput.value = name || nameInput.value;
+    if (emailInput) emailInput.value = email || emailInput.value;
+    if (mobileInput) mobileInput.value = phoneMobile || mobileInput.value;
+    if (phoneInput) phoneInput.value = phone || phoneInput.value;
+    if (roleInput && roles.length) roleInput.value = roles.join(", ");
+
+    if (companyInput && companyIds.length) {
+      const firstId = companyIds[0];
+      const match = companyOptions.find((company) => company.id === firstId);
+      companyInput.value = match?.name || firstId;
+    }
+  } catch (error) {
+    console.warn("Bestehende Person konnte nicht in Formular geladen werden:", error);
+  }
+}
+
 function setIfEmpty(elementId: string, value?: string) {
   const element = document.getElementById(elementId) as HTMLInputElement | HTMLTextAreaElement | null;
   if (!element || !value) {
@@ -1778,6 +1819,7 @@ async function checkPersonNameDuplicate(raw: string, seq: number) {
   if (match) {
     const extra = match.email ? ` (${match.email})` : "";
     setHint("person-duplicate-hint", `Person existiert bereits: ${match.name}${extra}`, "success");
+    await loadExistingPersonIntoForm(match.id);
     return;
   }
   try {
@@ -1786,6 +1828,7 @@ async function checkPersonNameDuplicate(raw: string, seq: number) {
     if (remoteMatch) {
       const extra = remoteMatch.email ? ` (${remoteMatch.email})` : "";
       setHint("person-duplicate-hint", `Person existiert bereits: ${remoteMatch.name}${extra}`, "success");
+      await loadExistingPersonIntoForm(remoteMatch.id);
     } else {
       setHint("person-duplicate-hint", "Keine bestehende Person gefunden.", "info");
     }
@@ -1809,6 +1852,7 @@ async function checkPersonEmailDuplicate(raw: string, seq: number) {
       `E-Mail existiert bereits: ${match.name ?? match.email}`,
       "success"
     );
+    await loadExistingPersonIntoForm(match.id);
     return;
   }
   try {
@@ -1820,6 +1864,7 @@ async function checkPersonEmailDuplicate(raw: string, seq: number) {
         `E-Mail existiert bereits: ${remoteMatch.name ?? remoteMatch.email}`,
         "success"
       );
+      await loadExistingPersonIntoForm(remoteMatch.id);
     } else {
       setHint("person-email-duplicate-hint", "E-Mail noch nicht vorhanden.", "info");
     }
