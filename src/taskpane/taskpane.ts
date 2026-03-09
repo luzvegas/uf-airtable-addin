@@ -700,7 +700,7 @@ async function handleDocumentSubmit(event: Event) {
     const selectedIds = Array.from(checkboxes).map((c) => c.value);
     const selected = getEligibleAttachments().filter((att) => selectedIds.includes(att.id));
     if (selected.length) {
-      payload.attachments = await prepareAirtableAttachments(selected);
+      payload.attachments = await prepareAirtableAttachments(selected, { preferDirectDownload: true });
     }
   } else {
     const linkChecks = document.querySelectorAll<HTMLInputElement>(".doc-link-checkbox:checked");
@@ -2044,7 +2044,10 @@ function getSelectedInternalOwnerEmail(): string | undefined {
   return undefined;
 }
 
-async function prepareAirtableAttachments(selected: OutlookAttachmentPreview[]): Promise<AirtableAttachmentInput[]> {
+async function prepareAirtableAttachments(
+  selected: OutlookAttachmentPreview[],
+  options?: { preferDirectDownload?: boolean }
+): Promise<AirtableAttachmentInput[]> {
   if (!selected.length) {
     console.info("Keine Anhänge ausgewählt.");
     return [];
@@ -2091,7 +2094,12 @@ async function prepareAirtableAttachments(selected: OutlookAttachmentPreview[]):
 
     if (content.type === "base64") {
       try {
-        const uploaded = await uploadToOneDriveAndShare(attachment.name, content.value, graphToken);
+        const uploaded = await uploadToOneDriveAndShare(
+          attachment.name,
+          content.value,
+          graphToken,
+          options?.preferDirectDownload === true
+        );
         if (uploaded) {
           console.info("Upload erfolgreich für", attachment.name);
           results.push(uploaded);
@@ -2209,7 +2217,8 @@ async function getGraphToken(): Promise<string | null> {
 async function uploadToOneDriveAndShare(
   filename: string,
   base64: string,
-  graphToken: string
+  graphToken: string,
+  preferDirectDownload = false
 ): Promise<AirtableAttachmentInput | null> {
   const safeName = filename || `upload-${Date.now()}`;
   const uploadSessionUrl = `https://graph.microsoft.com/v1.0/me/drive/special/approot:/OutlookAirtableUploads/${encodeURIComponent(
@@ -2284,6 +2293,11 @@ async function uploadToOneDriveAndShare(
     }
   } catch (e) {
     console.warn("Download-URL nicht abrufbar:", e);
+  }
+
+  if (preferDirectDownload && fallbackDownloadUrl) {
+    console.info("Download-URL bevorzugt verwendet für", filename, fallbackDownloadUrl);
+    return { filename, url: fallbackDownloadUrl };
   }
 
   const shareScopes = ["anonymous", "organization"];
