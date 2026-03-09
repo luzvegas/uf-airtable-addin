@@ -253,6 +253,10 @@ export class AirtableClient {
       fields.fldJJxnpWs4OsNHSq = payload.url; // Link URL
     }
 
+    if (payload.category) {
+      fields.fldllxIOOyGp7XhkL = payload.category; // Kategorie
+    }
+
     return this.createRecord(this.config.baseIds.documents, this.config.tableNames.documents, fields);
   }
 
@@ -613,6 +617,43 @@ export class AirtableClient {
       return field.options.choices.map((choice) => choice.name).filter(Boolean);
     } catch (error) {
       console.warn("Company categories fallback used due to error:", error);
+      return [];
+    }
+  }
+
+  async fetchDocumentCategories(): Promise<string[]> {
+    const baseId = this.config.baseIds.documents || this.config.baseIds.tasks;
+    const tableName = this.config.tableNames.documents;
+    try {
+      const metadataUrl = `https://api.airtable.com/v0/meta/bases/${baseId}/tables`;
+      const response = await fetch(metadataUrl, {
+        headers: {
+          Authorization: `Bearer ${this.config.personalAccessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Airtable metadata error ${response.status}: ${await response.text()}`);
+      }
+
+      const body = (await response.json()) as {
+        tables: Array<{
+          name: string;
+          fields: Array<{ name: string; type: string; options?: { choices?: Array<{ name: string }> } }>;
+        }>;
+      };
+
+      const table = body.tables.find((t) => t.name === tableName);
+      if (!table) {
+        return [];
+      }
+      const field = table.fields.find((f) => f.name === "Kategorie" && f.type === "singleSelect");
+      if (!field?.options?.choices) {
+        return [];
+      }
+      return field.options.choices.map((choice) => choice.name).filter(Boolean);
+    } catch (error) {
+      console.warn("Document categories fallback used due to error:", error);
       return [];
     }
   }

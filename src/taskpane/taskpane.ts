@@ -44,6 +44,7 @@ let externalOptions: AirtableProjectOption[] = [];
 let companyOptions: AirtableCompanyOption[] = [];
 let personRoleOptions: string[] = [];
 let companyCategoryOptions: string[] = [];
+let documentCategoryOptions: string[] = [];
 let senderEmail: string | undefined;
 let cachedGraphToken: string | null = null;
 let notePersonTokens: string[] = [];
@@ -85,6 +86,7 @@ async function initializePane() {
     loadCompanies(),
     loadPersonRoles(),
     loadCompanyCategories(),
+    loadDocumentCategories(),
   ]);
   triggerPrefilledPersonDuplicateChecks();
 }
@@ -602,6 +604,43 @@ async function loadCompanyCategories() {
   }
 }
 
+async function loadDocumentCategories() {
+  const select = document.getElementById("document-category") as HTMLSelectElement | null;
+  if (!select) {
+    return;
+  }
+
+  const currentValue = select.value;
+  try {
+    documentCategoryOptions = await airtableClient.fetchDocumentCategories();
+  } catch (error) {
+    console.error("Dokumentkategorien konnten nicht geladen werden:", error);
+    documentCategoryOptions = [];
+  }
+
+  const fallback = ["Deliveries", "Mastering", "Allgemein", "Grading", "Moods", "VFX"];
+  const options = documentCategoryOptions.length ? documentCategoryOptions : fallback;
+
+  select.innerHTML = "";
+  const unsetOption = document.createElement("option");
+  unsetOption.value = "";
+  unsetOption.textContent = "Nicht gesetzt";
+  select.appendChild(unsetOption);
+
+  options.forEach((category) => {
+    const option = document.createElement("option");
+    option.value = category;
+    option.textContent = category;
+    select.appendChild(option);
+  });
+
+  if (currentValue && options.includes(currentValue)) {
+    select.value = currentValue;
+  } else {
+    select.value = "";
+  }
+}
+
 function filterLink(url: string, count: number): boolean {
   const lower = url.toLowerCase();
   if (lower.includes("safelinks.protection.outlook.com")) return false;
@@ -653,7 +692,9 @@ async function handleTaskSubmit(event: Event) {
   }
 
   await executeWithStatus("task-status", async () => {
-    const attachmentInputs = await prepareAirtableAttachments(getSelectedAttachments("task-attachment-checkbox"));
+    const attachmentInputs = await prepareAirtableAttachments(getSelectedAttachments("task-attachment-checkbox"), {
+      preferDirectDownload: true,
+    });
     console.info("Attachments an Airtable-Payload:", attachmentInputs);
     const payload: AirtableTaskPayload = {
       title: getInputValue("task-title") || messageMetadata.subject,
@@ -686,11 +727,13 @@ async function handleDocumentSubmit(event: Event) {
   const source = documentSource && documentSource.value ? documentSource.value : "link";
   const project = getInputValue("document-project-input");
   const label = truncateForAirtable(sanitizeForAirtableText(getInputValue("document-label")));
+  const category = getInputValue("document-category") || undefined;
 
   const payload: AirtableDocumentPayload = {
     project,
     projectRecordId: getProjectRecordId("document"),
     label,
+    category,
     type: source as AirtableDocumentPayload["type"],
     message: messageMetadata,
   };
@@ -1000,6 +1043,7 @@ async function refreshLookupData(force = false) {
     loadCompanies(),
     loadPersonRoles(),
     loadCompanyCategories(),
+    loadDocumentCategories(),
     loadExternalPersons(),
     loadCollaborators(),
   ]);

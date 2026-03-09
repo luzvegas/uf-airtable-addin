@@ -55,6 +55,7 @@ export interface AirtableDocumentPayload {
   projectRecordId?: string;
   type: "attachment" | "link";
   label: string;
+  category?: string;
   url?: string;
   attachment?: OutlookAttachmentPreview;
   attachments?: AirtableAttachmentInput[];
