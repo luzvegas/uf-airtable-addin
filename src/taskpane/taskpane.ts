@@ -33,6 +33,7 @@ const GRAPH_CLIENT_ID = (process.env.GRAPH_CLIENT_ID || "").trim();
 const GRAPH_TENANT_ID = (process.env.GRAPH_TENANT_ID || "common").trim();
 const GRAPH_REDIRECT_URI = (process.env.GRAPH_REDIRECT_URI || "").trim();
 const LOOKUP_REFRESH_THROTTLE_MS = 20000;
+const MAIL_DESCRIPTION_MAX_LENGTH = 4000;
 
 let attachments: OutlookAttachmentPreview[] = [];
 let detectedLinks: string[] = [];
@@ -1739,14 +1740,20 @@ function buildMailDescription(body: string): string {
   if (messageMetadata?.subject) {
     headerLines.push(`Betreff: ${messageMetadata.subject}`);
   }
+  if (messageMetadata?.webLink) {
+    headerLines.push(`Outlook-Link: ${messageMetadata.webLink}`);
+  }
 
   const header = headerLines.join("\n");
-  const content = normalizeBodyText(limitBodyText(body || "", 12000));
+  const primaryBody = normalizeBodyText(extractPrimaryMessageBody(body || ""));
+  const isTruncated = primaryBody.length > MAIL_DESCRIPTION_MAX_LENGTH;
+  const content = normalizeBodyText(limitBodyText(primaryBody, MAIL_DESCRIPTION_MAX_LENGTH));
+  const finalContent = isTruncated ? `${content}\n\n[Mailtext gekuerzt]` : content;
 
-  if (header && content) {
-    return `${header}\n\n${content}`;
+  if (header && finalContent) {
+    return `${header}\n\n${finalContent}`;
   }
-  return header || content;
+  return header || finalContent;
 }
 
 function prefillCompanyFromSender() {
